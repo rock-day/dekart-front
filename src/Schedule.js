@@ -240,6 +240,10 @@ class Schedule extends React.Component {
   render() {
     moment.locale('ru-RU');
     const localizer = momentLocalizer(moment);
+    const minTime = new Date();
+    minTime.setHours(8, 0, 0);
+    const maxTime = new Date();
+    maxTime.setHours(22, 0, 0);
 
     return (
       <div>
@@ -249,12 +253,14 @@ class Schedule extends React.Component {
           localizer={localizer}
           defaultView={Views.WEEK}
           views={['day', 'work_week', 'month', 'week', 'agenda']}
-          step={60}
+          step={30}
+          min={minTime}
+          max={maxTime}
           defaultDate={new Date()}
           onSelectEvent={this.handleSelectEvent}
           onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
           onSelectSlot={this.handleSelect}
-          eventPropGetter={(this.eventStyleGetter)}
+          eventPropGetter={this.eventStyleGetter}
         />
         <Modal isOpen={this.state.isAddModalOpen}>
           <ModalHeader>Расписание занятия</ModalHeader>
