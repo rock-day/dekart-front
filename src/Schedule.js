@@ -2,13 +2,28 @@ import React from 'react';
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import { Modal, ModalHeader, ModalBody, ModalFooter,
   Button, Form, FormGroup, Input, Label, Col, Row } from 'reactstrap';
+import SelectSearch from 'react-select-search';
+import './css/select-search.css';
 
 // import ExampleControlSlot from '../ExampleControlSlot'
 import moment from 'moment';
 import 'moment/locale/ru';
 
+const groups = [
+  {
+    groupId: '123',
+    name: 'Математика ОГЭ8 - Петров И.',
+  },
+  {
+    groupId: '234',
+    name: 'История ЕГЭ11 - Иванов П.',
+  },
+];
+
 const schedule = [
   {
+    groupId: '123',
+    groupName: 'Математика ОГЭ8 - Петров И.',
     day: 1,
     start: '15:45',
     end: '17:15',
@@ -17,6 +32,8 @@ const schedule = [
     resourceId: 1,
   },
   {
+    groupId: '234',
+    groupName: 'История ЕГЭ11 - Иванов П.',
     day: 3,
     start: '16:30',
     end: '18:00',
@@ -63,41 +80,41 @@ const planArray = Array.from(schedule, createPlan);
 
 const eventsPlan = [].concat.apply([], planArray);
 
-let events = [
-  {
-    id: 0,
-    title: 'Board meeting',
-    start: new Date(2018, 0, 29, 9, 0, 0),
-    end: new Date(2018, 0, 29, 13, 0, 0),
-    resourceId: 1,
-    isPlanned: false,
-  },
-  {
-    id: 1,
-    title: 'MS training',
-    allDay: true,
-    start: new Date(2018, 0, 29, 14, 0, 0),
-    end: new Date(2018, 0, 29, 16, 30, 0),
-    resourceId: 2,
-    isPlanned: true,
-  },
-  {
-    id: 2,
-    title: 'Team lead meeting',
-    start: new Date(2018, 0, 29, 8, 30, 0),
-    end: new Date(2018, 0, 29, 12, 30, 0),
-    resourceId: 3,
-    isPlanned: false,
-  },
-  {
-    id: 11,
-    title: 'Birthday Party',
-    start: new Date(2018, 0, 30, 7, 0, 0),
-    end: new Date(2018, 0, 30, 10, 30, 0),
-    resourceId: 4,
-    isPlanned: true,
-  },
-];
+// let events = [
+//   {
+//     id: 0,
+//     title: 'Board meeting',
+//     start: new Date(2018, 0, 29, 9, 0, 0),
+//     end: new Date(2018, 0, 29, 13, 0, 0),
+//     resourceId: 1,
+//     isPlanned: false,
+//   },
+//   {
+//     id: 1,
+//     title: 'MS training',
+//     allDay: true,
+//     start: new Date(2018, 0, 29, 14, 0, 0),
+//     end: new Date(2018, 0, 29, 16, 30, 0),
+//     resourceId: 2,
+//     isPlanned: true,
+//   },
+//   {
+//     id: 2,
+//     title: 'Team lead meeting',
+//     start: new Date(2018, 0, 29, 8, 30, 0),
+//     end: new Date(2018, 0, 29, 12, 30, 0),
+//     resourceId: 3,
+//     isPlanned: false,
+//   },
+//   {
+//     id: 11,
+//     title: 'Birthday Party',
+//     start: new Date(2018, 0, 30, 7, 0, 0),
+//     end: new Date(2018, 0, 30, 10, 30, 0),
+//     resourceId: 4,
+//     isPlanned: true,
+//   },
+// ];
 
 const resourceMap = [
   { resourceId: 1, resourceTitle: 'Board room' },
@@ -115,6 +132,7 @@ class Schedule extends React.Component {
       isAddModalOpen: false,
       isEditModalOpen: false,
       newEventData: {
+        newGroupId: '',
         newTitle: '',
         newStart: '',
         newEnd: '',
@@ -123,6 +141,7 @@ class Schedule extends React.Component {
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleGroupChange = this.handleGroupChange.bind(this);
   }
 
   handleSelect = (event) => {
@@ -166,6 +185,7 @@ class Schedule extends React.Component {
         {
           start: this.state.newEventData.newStart,
           end: this.state.newEventData.newEnd,
+          groupId: this.state.newEventData.newGroupId,
           title: this.state.newEventData.newTitle,
           resourceId: this.state.newEventData.newResourceId,
         },
@@ -182,9 +202,20 @@ class Schedule extends React.Component {
     });
   };
 
+  handleGroupChange(event) {
+    this.setState((prevState) => ({
+      newEventData: {
+        ...prevState.newEventData,
+        newGroupId: event,
+        newTitle: groups.find((grp) => (grp.groupId === event)).name,
+      },
+    }));
+  }
+
   handleInputChange(event) {
     const target = event.target;
     const value = target.value;
+
     const name = target.name;
     let state = this.state;
     let attr = '';
@@ -245,6 +276,23 @@ class Schedule extends React.Component {
     const maxTime = new Date();
     maxTime.setHours(22, 0, 0);
 
+    const groupOptions = groups.map((group) => ({
+      name: group.name,
+      value: group.groupId.toString(),
+    }));
+
+    // [
+    //   { name: 'Swedish', value: 'sv' },
+    //   { name: 'English', value: 'en' },
+    //   {
+    //     type: 'group',
+    //     name: 'Group name',
+    //     items: [
+    //       { name: 'Spanish', value: 'es' },
+    //     ],
+    //   },
+    // ];
+
     return (
       <div>
         <Calendar
@@ -267,8 +315,17 @@ class Schedule extends React.Component {
           <ModalBody>
             <Form>
               <Label>Группа</Label>
-              <Input type='text' name='newTitle' onChange={this.handleInputChange}
-                value={this.state.newEventData.newTitle || ''}></Input>
+              {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
+              value={this.state.newEventData.newTitle || ''}></Input> */}
+              <SelectSearch
+                search
+                onChange={this.handleGroupChange}
+                value={this.state.newEventData.newGroupId || ''}
+                options={groupOptions}
+                defaultValue=''
+                name='newTitle'
+                placeholder='Выберите группу'
+              />
               <Row>
                 <Col>
                   <FormGroup>
@@ -305,6 +362,55 @@ class Schedule extends React.Component {
                   </FormGroup>
                 </Col>
               </Row>
+              <Row>
+                <Col sm={2}>
+                  <Label>Повтор:</Label>
+                </Col>
+                <Col>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="monRpt"/>
+                      Пн
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="tueRpt"/>
+                      Вт
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="wedRpt"/>
+                      Ср
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="thuRpt"/>
+                      Чт
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="friRpt"/>
+                      Пт
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="satRpt"/>
+                      Сб
+                    </Label>
+                  </FormGroup>
+                  <FormGroup check inline>
+                    <Label check>
+                      <Input type="checkbox" name="check" id="sunRpt"/>
+                      Вс
+                    </Label>
+                  </FormGroup>
+                </Col>
+              </Row>
             </Form>
           </ModalBody>
           <ModalFooter>
@@ -312,20 +418,20 @@ class Schedule extends React.Component {
             <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
           </ModalFooter>
         </Modal>
-        <Modal isOpen={this.state.isEditModalOpen}>
+        {/* <Modal isOpen={this.state.isEditModalOpen}>
           <ModalHeader>Modal title</ModalHeader>
           <ModalBody>
             <Form>
-              <Label>Title</Label>
-              <Input type='text' name='Title'>
-              </Input>
+          <Label>Title</Label>
+          <Input type='text' name='Title'>
+          </Input>
             </Form>
           </ModalBody>
           <ModalFooter>
             <Button color='primary' onClick={this.addEvent}>Изменить</Button>{' '}
             <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
           </ModalFooter>
-        </Modal>
+        </Modal> */}
       </div>
     );
   }
