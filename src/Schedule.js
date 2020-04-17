@@ -22,21 +22,13 @@ const groups = [
 
 const schedule = [
   {
+    id: '1',
     groupId: '123',
-    groupName: 'Математика ОГЭ8 - Петров И.',
+    groupName: 'Математика ОГЭ8',
+    teacher: 'Петров И.',
     day: 1,
     start: '15:45',
     end: '17:15',
-    startDate: '2020-04-05',
-    endDate: '2020-05-30',
-    resourceId: 1,
-  },
-  {
-    groupId: '234',
-    groupName: 'История ЕГЭ11 - Иванов П.',
-    day: 3,
-    start: '16:30',
-    end: '18:00',
     startDate: '2020-04-05',
     endDate: '2020-05-30',
     resourceId: 1,
@@ -62,7 +54,7 @@ function createPlan(scheduleItem) {
         minute: endTime.get('minute'),
       });
       const planItem = {
-        title: 'test',
+        title: `${scheduleItem.groupName} - ${scheduleItem.teacher}`,
         allDay: false,
         start: s.toDate(),
         end: e.toDate(),
@@ -75,10 +67,6 @@ function createPlan(scheduleItem) {
 
   return localPlanArray;
 }
-
-const planArray = Array.from(schedule, createPlan);
-
-const eventsPlan = [].concat.apply([], planArray);
 
 // let events = [
 //   {
@@ -123,12 +111,29 @@ const resourceMap = [
   { resourceId: 4, resourceTitle: 'Meeting room 2' },
 ];
 
+// const newEvent = {
+//   id: '2',
+//   groupId: '234',
+//   groupName: 'История ЕГЭ11',
+//   teacher: 'Иванов П.',
+//   day: 3,
+//   start: '16:30',
+//   end: '18:00',
+//   startDate: '2020-04-05',
+//   endDate: '2020-05-30',
+//   resourceId: 1,
+// };
+
 class Schedule extends React.Component {
   constructor(...args) {
     super(...args);
 
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
     this.state = {
       events: eventsPlan,
+      isPlanModalOpen: false,
       isAddModalOpen: false,
       isEditModalOpen: false,
       newEventData: {
@@ -142,6 +147,24 @@ class Schedule extends React.Component {
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleGroupChange = this.handleGroupChange.bind(this);
+    this.handlePlanEvent = this.handlePlanEvent.bind(this);
+  }
+
+  handlePlanEvent() {
+    this.setState({
+      isPlanModalOpen: true,
+    });
+  }
+
+  handlePlanEventAdd(newEvent) {
+    const newEventPlan = createPlan(newEvent);
+    const newEvents = this.state.events.concat(newEventPlan);
+
+    // console.log(this.state.events, newEventPlan);
+    this.setState({
+      events: newEvents,
+      isPlanModalOpen: false,
+    });
   }
 
   handleSelect = (event) => {
@@ -174,7 +197,7 @@ class Schedule extends React.Component {
     }
 
     return {
-      style: style,
+      style,
     };
   };
 
@@ -198,7 +221,7 @@ class Schedule extends React.Component {
   closeModal = () => {
     this.setState({
       isAddModalOpen: false,
-      isEditModalOpen: false,
+      isPlanModalOpen: false,
     });
   };
 
@@ -295,143 +318,257 @@ class Schedule extends React.Component {
 
     return (
       <div>
-        <Calendar
-          selectable
-          events={this.state.events}
-          localizer={localizer}
-          defaultView={Views.WEEK}
-          views={['day', 'work_week', 'month', 'week', 'agenda']}
-          step={30}
-          min={minTime}
-          max={maxTime}
-          defaultDate={new Date()}
-          onSelectEvent={this.handleSelectEvent}
-          onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
-          onSelectSlot={this.handleSelect}
-          eventPropGetter={this.eventStyleGetter}
-        />
-        <Modal isOpen={this.state.isAddModalOpen}>
-          <ModalHeader>Расписание занятия</ModalHeader>
-          <ModalBody>
+        <div>
+          <Button color='primary'
+            onClick={this.handlePlanEvent}>Запланировать урок</Button>{' '}
+          <Modal isOpen={this.state.isPlanModalOpen}>
+            <ModalHeader>Расписание занятия</ModalHeader>
+            <ModalBody>
+              <Form>
+                <Label>Группа</Label>
+                {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
+                value={this.state.newEventData.newTitle || ''}></Input> */}
+                <SelectSearch
+                  search
+                  onChange={this.handleGroupChange}
+                  value={this.state.newEventData.newGroupId || ''}
+                  options={groupOptions}
+                  defaultValue=''
+                  name='newTitle'
+                  placeholder='Выберите группу'
+                />
+                <Row>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newStartDate'>Дата</Label>
+                      <Input readOnly
+                        type='date'
+                        id='newStartDate'
+                        value={moment(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newStartTime'>Начало</Label>
+                      <Input
+                        type='time'
+                        name='newStartTime'
+                        id='newStartTime'
+                        value={moment(this.state.newEventData.newStart).format('HH:mm') || ''}
+                        onChange={this.handleInputChange}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newEndTime'>Оконачание</Label>
+                      <Input
+                        type='time'
+                        name='newEndTime'
+                        id='newEndTime'
+                        value={moment(this.state.newEventData.newEnd).format('HH:mm') || ''}
+                        onChange={this.handleInputChange}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col sm={2}>
+                    <Label>Повтор:</Label>
+                  </Col>
+                  <Col>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="1" id="monRpt"/>
+                        Пн
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="2" id="tueRpt"/>
+                        Вт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="3" id="wedRpt"/>
+                        Ср
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="4" id="thuRpt"/>
+                        Чт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="5" id="friRpt"/>
+                        Пт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="6" id="satRpt"/>
+                        Сб
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="7" id="sunRpt"/>
+                        Вс
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </Form>
+            </ModalBody>
+            <ModalFooter>
+              <Button color='primary' onClick={this.handlePlanEventAdd}>Добавить</Button>{' '}
+              <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
+            </ModalFooter>
+          </Modal>
+        </div>
+        <div>
+          <Calendar
+            selectable
+            events={this.state.events}
+            localizer={localizer}
+            defaultView={Views.WEEK}
+            views={['day', 'work_week', 'month', 'week', 'agenda']}
+            step={30}
+            min={minTime}
+            max={maxTime}
+            defaultDate={new Date()}
+            onSelectEvent={this.handleSelectEvent}
+            onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
+            onSelectSlot={this.handleSelect}
+            eventPropGetter={this.eventStyleGetter}
+          />
+          <Modal isOpen={this.state.isAddModalOpen}>
+            <ModalHeader>Расписание занятия</ModalHeader>
+            <ModalBody>
+              <Form>
+                <Label>Группа</Label>
+                {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
+                value={this.state.newEventData.newTitle || ''}></Input> */}
+                <SelectSearch
+                  search
+                  onChange={this.handleGroupChange}
+                  value={this.state.newEventData.newGroupId || ''}
+                  options={groupOptions}
+                  defaultValue=''
+                  name='newTitle'
+                  placeholder='Выберите группу'
+                />
+                <Row>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newStartDate'>Дата</Label>
+                      <Input readOnly
+                        type='date'
+                        id='newStartDate'
+                        value={moment(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newStartTime'>Начало</Label>
+                      <Input
+                        type='time'
+                        name='newStartTime'
+                        id='newStartTime'
+                        value={moment(this.state.newEventData.newStart).format('HH:mm') || ''}
+                        onChange={this.handleInputChange}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newEndTime'>Оконачание</Label>
+                      <Input
+                        type='time'
+                        name='newEndTime'
+                        id='newEndTime'
+                        value={moment(this.state.newEventData.newEnd).format('HH:mm') || ''}
+                        onChange={this.handleInputChange}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col sm={2}>
+                    <Label>Повтор:</Label>
+                  </Col>
+                  <Col>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="1" id="monRpt"/>
+                        Пн
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="2" id="tueRpt"/>
+                        Вт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="3" id="wedRpt"/>
+                        Ср
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="4" id="thuRpt"/>
+                        Чт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="5" id="friRpt"/>
+                        Пт
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="6" id="satRpt"/>
+                        Сб
+                      </Label>
+                    </FormGroup>
+                    <FormGroup check inline>
+                      <Label check>
+                        <Input type="checkbox" name="7" id="sunRpt"/>
+                        Вс
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </Form>
+            </ModalBody>
+            <ModalFooter>
+              <Button color='primary' onClick={this.addEvent}>Добавить</Button>{' '}
+              <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
+            </ModalFooter>
+          </Modal>
+          {/* <Modal isOpen={this.state.isEditModalOpen}>
+            <ModalHeader>Modal title</ModalHeader>
+            <ModalBody>
             <Form>
-              <Label>Группа</Label>
-              {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
-              value={this.state.newEventData.newTitle || ''}></Input> */}
-              <SelectSearch
-                search
-                onChange={this.handleGroupChange}
-                value={this.state.newEventData.newGroupId || ''}
-                options={groupOptions}
-                defaultValue=''
-                name='newTitle'
-                placeholder='Выберите группу'
-              />
-              <Row>
-                <Col>
-                  <FormGroup>
-                    <Label for='newStartDate'>Дата</Label>
-                    <Input readOnly
-                      type='date'
-                      id='newStartDate'
-                      value={moment(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col>
-                  <FormGroup>
-                    <Label for='newStartTime'>Начало</Label>
-                    <Input
-                      type='time'
-                      name='newStartTime'
-                      id='newStartTime'
-                      value={moment(this.state.newEventData.newStart).format('HH:mm') || ''}
-                      onChange={this.handleInputChange}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col>
-                  <FormGroup>
-                    <Label for='newEndTime'>Оконачание</Label>
-                    <Input
-                      type='time'
-                      name='newEndTime'
-                      id='newEndTime'
-                      value={moment(this.state.newEventData.newEnd).format('HH:mm') || ''}
-                      onChange={this.handleInputChange}
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-              <Row>
-                <Col sm={2}>
-                  <Label>Повтор:</Label>
-                </Col>
-                <Col>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="monRpt"/>
-                      Пн
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="tueRpt"/>
-                      Вт
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="wedRpt"/>
-                      Ср
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="thuRpt"/>
-                      Чт
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="friRpt"/>
-                      Пт
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="satRpt"/>
-                      Сб
-                    </Label>
-                  </FormGroup>
-                  <FormGroup check inline>
-                    <Label check>
-                      <Input type="checkbox" name="check" id="sunRpt"/>
-                      Вс
-                    </Label>
-                  </FormGroup>
-                </Col>
-              </Row>
+            <Label>Title</Label>
+            <Input type='text' name='Title'>
+            </Input>
             </Form>
-          </ModalBody>
-          <ModalFooter>
-            <Button color='primary' onClick={this.addEvent}>Добавить</Button>{' '}
-            <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
-          </ModalFooter>
-        </Modal>
-        {/* <Modal isOpen={this.state.isEditModalOpen}>
-          <ModalHeader>Modal title</ModalHeader>
-          <ModalBody>
-            <Form>
-          <Label>Title</Label>
-          <Input type='text' name='Title'>
-          </Input>
-            </Form>
-          </ModalBody>
-          <ModalFooter>
+            </ModalBody>
+            <ModalFooter>
             <Button color='primary' onClick={this.addEvent}>Изменить</Button>{' '}
             <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
-          </ModalFooter>
-        </Modal> */}
+            </ModalFooter>
+          </Modal> */}
+        </div>
       </div>
     );
   }
