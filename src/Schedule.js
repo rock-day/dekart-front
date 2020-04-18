@@ -4,56 +4,41 @@ import { Modal, ModalHeader, ModalBody, ModalFooter,
   Button, Form, FormGroup, Input, Label, Col, Row } from 'reactstrap';
 import SelectSearch from 'react-select-search';
 import './css/select-search.css';
-
-// import ExampleControlSlot from '../ExampleControlSlot'
+import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import 'moment/locale/ru';
 
-const groups = [
-  {
-    groupId: '123',
-    name: 'Математика ОГЭ8 - Петров И.',
-  },
-  {
-    groupId: '234',
-    name: 'История ЕГЭ11 - Иванов П.',
-  },
-];
-
-const schedule = [
-  {
-    id: '1',
-    groupId: '123',
-    groupName: 'Математика ОГЭ8',
-    teacher: 'Петров И.',
-    day: 1,
-    start: '15:45',
-    end: '17:15',
-    startDate: '2020-04-05',
-    endDate: '2020-05-30',
-    resourceId: 1,
-  },
-];
-
 function createPlan(scheduleItem) {
+  let planItem = {};
+  // if (!scheduleItem.repeat) {
+  //
+  // }
+
   const localPlanArray = [];
-  const startTime = moment(scheduleItem.start, 'HH:mm');
-  const endTime = moment(scheduleItem.end, 'HH:mm');
-  for (let date = moment(scheduleItem.startDate);
-    date.isBefore(scheduleItem.endDate);
+  const startDateTime = moment.unix(scheduleItem.startDateTime);
+  const endDateTime = moment.unix(scheduleItem.endDateTime);
+  const endDateRepeat = moment.unix(scheduleItem.endDateRepeat);
+  const starth = startDateTime.get('hour');
+  const startm = startDateTime.get('minute');
+  const endh = endDateTime.get('hour');
+  const endm = endDateTime.get('minute');
+  const weekDay = startDateTime.day();
+  for (let date = startDateTime;
+    date.isBefore(endDateRepeat);
     date.add(1, 'days')) {
-    if (date.day() === scheduleItem.day) {
+    if (date.day() === weekDay) {
       let s = moment(date, 'YYYY-MM-DD HH:mm');
       s = s.set({
-        hour: startTime.get('hour'),
-        minute: startTime.get('minute'),
+        hour: starth,
+        minute: startm,
       });
       let e = moment(date, 'YYYY-MM-DD HH:mm');
       e = e.set({
-        hour: endTime.get('hour'),
-        minute: endTime.get('minute'),
+        hour: endh,
+        minute: endm,
       });
-      const planItem = {
+      planItem = {
+        scheduleId: scheduleItem.id,
         title: `${scheduleItem.groupName} - ${scheduleItem.teacher}`,
         allDay: false,
         start: s.toDate(),
@@ -68,110 +53,81 @@ function createPlan(scheduleItem) {
   return localPlanArray;
 }
 
-// let events = [
-//   {
-//     id: 0,
-//     title: 'Board meeting',
-//     start: new Date(2018, 0, 29, 9, 0, 0),
-//     end: new Date(2018, 0, 29, 13, 0, 0),
-//     resourceId: 1,
-//     isPlanned: false,
-//   },
-//   {
-//     id: 1,
-//     title: 'MS training',
-//     allDay: true,
-//     start: new Date(2018, 0, 29, 14, 0, 0),
-//     end: new Date(2018, 0, 29, 16, 30, 0),
-//     resourceId: 2,
-//     isPlanned: true,
-//   },
-//   {
-//     id: 2,
-//     title: 'Team lead meeting',
-//     start: new Date(2018, 0, 29, 8, 30, 0),
-//     end: new Date(2018, 0, 29, 12, 30, 0),
-//     resourceId: 3,
-//     isPlanned: false,
-//   },
-//   {
-//     id: 11,
-//     title: 'Birthday Party',
-//     start: new Date(2018, 0, 30, 7, 0, 0),
-//     end: new Date(2018, 0, 30, 10, 30, 0),
-//     resourceId: 4,
-//     isPlanned: true,
-//   },
-// ];
-
-const resourceMap = [
-  { resourceId: 1, resourceTitle: 'Board room' },
-  { resourceId: 2, resourceTitle: 'Training room' },
-  { resourceId: 3, resourceTitle: 'Meeting room 1' },
-  { resourceId: 4, resourceTitle: 'Meeting room 2' },
-];
-
-// const newEvent = {
-//   id: '2',
-//   groupId: '234',
-//   groupName: 'История ЕГЭ11',
-//   teacher: 'Иванов П.',
-//   day: 3,
-//   start: '16:30',
-//   end: '18:00',
-//   startDate: '2020-04-05',
-//   endDate: '2020-05-30',
-//   resourceId: 1,
-// };
-
 class Schedule extends React.Component {
   constructor(...args) {
     super(...args);
 
-    const planArray = Array.from(schedule, createPlan);
-    const eventsPlan = [].concat.apply([], planArray);
+    // const resourceMap = [
+    //   { resourceId: 1, resourceTitle: 'Board room' },
+    //   { resourceId: 2, resourceTitle: 'Training room' },
+    //   { resourceId: 3, resourceTitle: 'Meeting room 1' },
+    //   { resourceId: 4, resourceTitle: 'Meeting room 2' },
+    // ];
 
     this.state = {
-      events: eventsPlan,
+      groups: [],
+      schedule: [],
+      events: [],
       isPlanModalOpen: false,
       isAddModalOpen: false,
       isEditModalOpen: false,
       newEventData: {
+        newScheduleId: null,
         newGroupId: '',
         newTitle: '',
-        newStart: '',
-        newEnd: '',
+        newStart: 0,
+        newEnd: 0,
         newResourceId: '',
+        newRepeat: 1,
       },
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleGroupChange = this.handleGroupChange.bind(this);
-    this.handlePlanEvent = this.handlePlanEvent.bind(this);
   }
 
-  handlePlanEvent() {
-    this.setState({
-      isPlanModalOpen: true,
-    });
-  }
+  componentDidMount() {
+    const groups = [
+      {
+        groupId: '123',
+        name: 'Математика ОГЭ8 - Петров И.',
+      },
+      {
+        groupId: '234',
+        name: 'История ЕГЭ11 - Иванов П.',
+      },
+    ];
 
-  handlePlanEventAdd(newEvent) {
-    const newEventPlan = createPlan(newEvent);
-    const newEvents = this.state.events.concat(newEventPlan);
+    const schedule = [
+      {
+        id: '1',
+        groupId: '123',
+        groupName: 'Математика ОГЭ8',
+        teacherId: 1,
+        teacher: 'Петров И.',
+        startDateTime: 1587213900,
+        endDateTime: 1587219300,
+        endDateRepeat: 1589760000,
+        resourceId: 1,
+      },
+    ];
 
-    // console.log(this.state.events, newEventPlan);
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
     this.setState({
-      events: newEvents,
-      isPlanModalOpen: false,
+      groups,
+      schedule,
+      events: eventsPlan,
     });
   }
 
   handleSelect = (event) => {
+    console.log(this.state.newEventData.newStart)
     this.setState({
       newEventData: {
-        newStart: event.start,
-        newEnd: event.end,
+        newStart: event.start.getTime() / 1000,
+        newEnd: event.end.getTime() / 1000,
         newResourceId: event.resourceId,
       },
       isAddModalOpen: true,
@@ -202,17 +158,27 @@ class Schedule extends React.Component {
   };
 
   addEvent = () => {
+    const newScheduleItem = {
+      id: `${uuidv4()}`,
+      groupId: this.state.newEventData.newGroupId,
+      groupName: this.state.newEventData.newTitle,
+      teacherId: 1,
+      teacher: 'Петров И.',
+      startDateTime: this.state.newEventData.newStart,
+      endDateTime: this.state.newEventData.newEnd,
+      endDateRepeat: 1589760000,
+      resourceId: 1,
+    };
+
+    const schedule = this.state.schedule;
+    schedule.push(newScheduleItem);
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
     this.setState({
-      events: [
-        ...this.state.events,
-        {
-          start: this.state.newEventData.newStart,
-          end: this.state.newEventData.newEnd,
-          groupId: this.state.newEventData.newGroupId,
-          title: this.state.newEventData.newTitle,
-          resourceId: this.state.newEventData.newResourceId,
-        },
-      ],
+      schedule,
+      events: eventsPlan,
       isAddModalOpen: false,
       isEditModalOpen: false,
     });
@@ -230,7 +196,7 @@ class Schedule extends React.Component {
       newEventData: {
         ...prevState.newEventData,
         newGroupId: event,
-        newTitle: groups.find((grp) => (grp.groupId === event)).name,
+        newTitle: this.state.groups.find((grp) => (grp.groupId === event)).name,
       },
     }));
   }
@@ -247,23 +213,23 @@ class Schedule extends React.Component {
     switch (name) {
       case 'newStartTime': {
         attr = 'newStart';
-        let startDate = moment(state.newEventData.newStart);
+        let startDate = moment.unix(state.newEventData.newStart);
         startDate = startDate.set({
           hour: value.substr(0, 2),
           minute: value.substr(3, 2),
         });
-        attrValue = startDate.toDate();
+        attrValue = startDate.unix();
         break;
       }
 
       case 'newEndTime': {
         attr = 'newEnd';
-        let endDate = moment(state.newEventData.newEnd);
+        let endDate = moment.unix(state.newEventData.newEnd);
         endDate = endDate.set({
           hour: value.substr(0, 2),
           minute: value.substr(3, 2),
         });
-        attrValue = endDate.toDate();
+        attrValue = endDate.unix();
         break;
       }
 
@@ -280,17 +246,6 @@ class Schedule extends React.Component {
     }));
   }
 
-  // changeEventHandler = (event) => ({
-  //   this.setState({
-  //     newEventData: {
-  //       newTitle: this.state.newEventData.newTitle,
-  //       newStart: event.target.value,
-  //       newEnd: this.state.newEventData.newEnd,
-  //       newResourceId: this.state.newEventData.newResourceId,
-  //     },
-  //   }),
-  // };
-
   render() {
     moment.locale('ru-RU');
     const localizer = momentLocalizer(moment);
@@ -299,137 +254,13 @@ class Schedule extends React.Component {
     const maxTime = new Date();
     maxTime.setHours(22, 0, 0);
 
-    const groupOptions = groups.map((group) => ({
+    const groupOptions = this.state.groups.map((group) => ({
       name: group.name,
       value: group.groupId.toString(),
     }));
 
-    // [
-    //   { name: 'Swedish', value: 'sv' },
-    //   { name: 'English', value: 'en' },
-    //   {
-    //     type: 'group',
-    //     name: 'Group name',
-    //     items: [
-    //       { name: 'Spanish', value: 'es' },
-    //     ],
-    //   },
-    // ];
-
     return (
       <div>
-        <div>
-          <Button color='primary'
-            onClick={this.handlePlanEvent}>Запланировать урок</Button>{' '}
-          <Modal isOpen={this.state.isPlanModalOpen}>
-            <ModalHeader>Расписание занятия</ModalHeader>
-            <ModalBody>
-              <Form>
-                <Label>Группа</Label>
-                {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
-                value={this.state.newEventData.newTitle || ''}></Input> */}
-                <SelectSearch
-                  search
-                  onChange={this.handleGroupChange}
-                  value={this.state.newEventData.newGroupId || ''}
-                  options={groupOptions}
-                  defaultValue=''
-                  name='newTitle'
-                  placeholder='Выберите группу'
-                />
-                <Row>
-                  <Col>
-                    <FormGroup>
-                      <Label for='newStartDate'>Дата</Label>
-                      <Input readOnly
-                        type='date'
-                        id='newStartDate'
-                        value={moment(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
-                      />
-                    </FormGroup>
-                  </Col>
-                  <Col>
-                    <FormGroup>
-                      <Label for='newStartTime'>Начало</Label>
-                      <Input
-                        type='time'
-                        name='newStartTime'
-                        id='newStartTime'
-                        value={moment(this.state.newEventData.newStart).format('HH:mm') || ''}
-                        onChange={this.handleInputChange}
-                      />
-                    </FormGroup>
-                  </Col>
-                  <Col>
-                    <FormGroup>
-                      <Label for='newEndTime'>Оконачание</Label>
-                      <Input
-                        type='time'
-                        name='newEndTime'
-                        id='newEndTime'
-                        value={moment(this.state.newEventData.newEnd).format('HH:mm') || ''}
-                        onChange={this.handleInputChange}
-                      />
-                    </FormGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col sm={2}>
-                    <Label>Повтор:</Label>
-                  </Col>
-                  <Col>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="1" id="monRpt"/>
-                        Пн
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="2" id="tueRpt"/>
-                        Вт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="3" id="wedRpt"/>
-                        Ср
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="4" id="thuRpt"/>
-                        Чт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="5" id="friRpt"/>
-                        Пт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="6" id="satRpt"/>
-                        Сб
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="7" id="sunRpt"/>
-                        Вс
-                      </Label>
-                    </FormGroup>
-                  </Col>
-                </Row>
-              </Form>
-            </ModalBody>
-            <ModalFooter>
-              <Button color='primary' onClick={this.handlePlanEventAdd}>Добавить</Button>{' '}
-              <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
-            </ModalFooter>
-          </Modal>
-        </div>
         <div>
           <Calendar
             selectable
@@ -451,8 +282,6 @@ class Schedule extends React.Component {
             <ModalBody>
               <Form>
                 <Label>Группа</Label>
-                {/* <Input type='text' name='newTitle' onChange={this.handleInputChange}
-                value={this.state.newEventData.newTitle || ''}></Input> */}
                 <SelectSearch
                   search
                   onChange={this.handleGroupChange}
@@ -469,7 +298,7 @@ class Schedule extends React.Component {
                       <Input readOnly
                         type='date'
                         id='newStartDate'
-                        value={moment(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
+                        value={moment.unix(this.state.newEventData.newStart).format('YYYY-MM-DD') || ''}
                       />
                     </FormGroup>
                   </Col>
@@ -480,7 +309,7 @@ class Schedule extends React.Component {
                         type='time'
                         name='newStartTime'
                         id='newStartTime'
-                        value={moment(this.state.newEventData.newStart).format('HH:mm') || ''}
+                        value={moment.unix(this.state.newEventData.newStart).format('HH:mm') || ''}
                         onChange={this.handleInputChange}
                       />
                     </FormGroup>
@@ -492,57 +321,32 @@ class Schedule extends React.Component {
                         type='time'
                         name='newEndTime'
                         id='newEndTime'
-                        value={moment(this.state.newEventData.newEnd).format('HH:mm') || ''}
+                        value={moment.unix(this.state.newEventData.newEnd).format('HH:mm') || ''}
                         onChange={this.handleInputChange}
                       />
                     </FormGroup>
                   </Col>
                 </Row>
                 <Row>
-                  <Col sm={2}>
-                    <Label>Повтор:</Label>
-                  </Col>
                   <Col>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="1" id="monRpt"/>
-                        Пн
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="2" id="tueRpt"/>
-                        Вт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="3" id="wedRpt"/>
-                        Ср
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="4" id="thuRpt"/>
-                        Чт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="5" id="friRpt"/>
-                        Пт
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="6" id="satRpt"/>
-                        Сб
-                      </Label>
-                    </FormGroup>
-                    <FormGroup check inline>
-                      <Label check>
-                        <Input type="checkbox" name="7" id="sunRpt"/>
-                        Вс
+                    <FormGroup>
+                      <Label>Повтор
+                        <Input
+                          type="select"
+                          name="newRepeat"
+                          id="repeat"
+                          value={this.state.newEventData.newRepeat}
+                          onChange={this.handleInputChange}
+                        >
+                          <option value="">не повторять</option>
+                          <option value="1">Понедельник</option>
+                          <option value="2">Вторник</option>
+                          <option value="3">Среда</option>
+                          <option value="4">Четверг</option>
+                          <option value="5">Пятница</option>
+                          <option value="6">Суббота</option>
+                          <option value="0">Воскресенье</option>
+                        </Input>
                       </Label>
                     </FormGroup>
                   </Col>
@@ -554,20 +358,6 @@ class Schedule extends React.Component {
               <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
             </ModalFooter>
           </Modal>
-          {/* <Modal isOpen={this.state.isEditModalOpen}>
-            <ModalHeader>Modal title</ModalHeader>
-            <ModalBody>
-            <Form>
-            <Label>Title</Label>
-            <Input type='text' name='Title'>
-            </Input>
-            </Form>
-            </ModalBody>
-            <ModalFooter>
-            <Button color='primary' onClick={this.addEvent}>Изменить</Button>{' '}
-            <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
-            </ModalFooter>
-          </Modal> */}
         </div>
       </div>
     );
