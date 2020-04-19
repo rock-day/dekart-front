@@ -10,21 +10,20 @@ import 'moment/locale/ru';
 
 function createPlan(scheduleItem) {
   let planItem = {};
-  // if (!scheduleItem.repeat) {
-  //
-  // }
 
   const localPlanArray = [];
   const startDateTime = moment.unix(scheduleItem.startDateTime);
   const endDateTime = moment.unix(scheduleItem.endDateTime);
-  const endDateRepeat = moment.unix(scheduleItem.endDateRepeat);
+  const endDateRepeat = scheduleItem.endDateRepeat
+    ? moment.unix(scheduleItem.endDateRepeat)
+    : startDateTime.clone();
   const starth = startDateTime.get('hour');
   const startm = startDateTime.get('minute');
   const endh = endDateTime.get('hour');
   const endm = endDateTime.get('minute');
   const weekDay = startDateTime.day();
-  for (let date = startDateTime;
-    date.isBefore(endDateRepeat);
+  for (let date = startDateTime.clone();
+    date.isSameOrBefore(endDateRepeat);
     date.add(1, 'days')) {
     if (date.day() === weekDay) {
       let s = moment(date, 'YYYY-MM-DD HH:mm');
@@ -39,11 +38,11 @@ function createPlan(scheduleItem) {
       });
       planItem = {
         scheduleId: scheduleItem.id,
-        title: `${scheduleItem.groupName} - ${scheduleItem.teacher}`,
+        title: scheduleItem.groupName,
         allDay: false,
         start: s.toDate(),
         end: e.toDate(),
-        resourceId: 2,
+        resourceId: scheduleItem.resourceId,
         isPlanned: true,
       };
       localPlanArray.push(planItem);
@@ -53,19 +52,14 @@ function createPlan(scheduleItem) {
   return localPlanArray;
 }
 
+let groups = [];
+let resourceMap = [];
+
 class Schedule extends React.Component {
   constructor(...args) {
     super(...args);
 
-    // const resourceMap = [
-    //   { resourceId: 1, resourceTitle: 'Board room' },
-    //   { resourceId: 2, resourceTitle: 'Training room' },
-    //   { resourceId: 3, resourceTitle: 'Meeting room 1' },
-    //   { resourceId: 4, resourceTitle: 'Meeting room 2' },
-    // ];
-
     this.state = {
-      groups: [],
       schedule: [],
       events: [],
       isPlanModalOpen: false,
@@ -77,7 +71,7 @@ class Schedule extends React.Component {
         newTitle: '',
         newStart: 0,
         newEnd: 0,
-        newResourceId: '',
+        newResourceId: 0,
         newRepeat: 1,
       },
     };
@@ -87,7 +81,14 @@ class Schedule extends React.Component {
   }
 
   componentDidMount() {
-    const groups = [
+    resourceMap = [
+      { resourceId: 1, resourceTitle: 'Аудитория 1' },
+      { resourceId: 2, resourceTitle: 'Аудитория 2' },
+      // { resourceId: 3, resourceTitle: 'Meeting room 1' },
+      // { resourceId: 4, resourceTitle: 'Meeting room 2' },
+    ];
+
+    groups = [
       {
         groupId: '123',
         name: 'Математика ОГЭ8 - Петров И.',
@@ -102,9 +103,7 @@ class Schedule extends React.Component {
       {
         id: '1',
         groupId: '123',
-        groupName: 'Математика ОГЭ8',
-        teacherId: 1,
-        teacher: 'Петров И.',
+        groupName: 'Математика ОГЭ8 - Петров И.',
         startDateTime: 1587213900,
         endDateTime: 1587219300,
         endDateRepeat: 1589760000,
@@ -116,14 +115,12 @@ class Schedule extends React.Component {
     const eventsPlan = [].concat.apply([], planArray);
 
     this.setState({
-      groups,
       schedule,
       events: eventsPlan,
     });
   }
 
   handleSelect = (event) => {
-    console.log(this.state.newEventData.newStart)
     this.setState({
       newEventData: {
         newStart: event.start.getTime() / 1000,
@@ -161,13 +158,11 @@ class Schedule extends React.Component {
     const newScheduleItem = {
       id: `${uuidv4()}`,
       groupId: this.state.newEventData.newGroupId,
-      groupName: this.state.newEventData.newTitle,
-      teacherId: 1,
-      teacher: 'Петров И.',
+      groupName: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
       startDateTime: this.state.newEventData.newStart,
       endDateTime: this.state.newEventData.newEnd,
-      endDateRepeat: 1589760000,
-      resourceId: 1,
+      // endDateRepeat: 1589760000,
+      resourceId: this.state.newEventData.newResourceId,
     };
 
     const schedule = this.state.schedule;
@@ -196,7 +191,7 @@ class Schedule extends React.Component {
       newEventData: {
         ...prevState.newEventData,
         newGroupId: event,
-        newTitle: this.state.groups.find((grp) => (grp.groupId === event)).name,
+        newTitle: groups.find((grp) => (grp.groupId === event)).name,
       },
     }));
   }
@@ -254,7 +249,7 @@ class Schedule extends React.Component {
     const maxTime = new Date();
     maxTime.setHours(22, 0, 0);
 
-    const groupOptions = this.state.groups.map((group) => ({
+    const groupOptions = groups.map((group) => ({
       name: group.name,
       value: group.groupId.toString(),
     }));
@@ -267,7 +262,7 @@ class Schedule extends React.Component {
             events={this.state.events}
             localizer={localizer}
             defaultView={Views.WEEK}
-            views={['day', 'work_week', 'month', 'week', 'agenda']}
+            views={['day', 'week', 'agenda']}
             step={30}
             min={minTime}
             max={maxTime}
@@ -276,6 +271,9 @@ class Schedule extends React.Component {
             onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
             onSelectSlot={this.handleSelect}
             eventPropGetter={this.eventStyleGetter}
+            resources={resourceMap}
+            resourceIdAccessor="resourceId"
+            resourceTitleAccessor="resourceTitle"
           />
           <Modal isOpen={this.state.isAddModalOpen}>
             <ModalHeader>Расписание занятия</ModalHeader>
