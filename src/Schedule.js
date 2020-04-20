@@ -7,10 +7,10 @@ import './css/select-search.css';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import 'moment/locale/ru';
+import ModalScheduleEdit from './ModalScheduleEdit';
 
 function createPlan(scheduleItem) {
   let planItem = {};
-
   const localPlanArray = [];
   const startDateTime = moment.unix(scheduleItem.startDateTime);
   const endDateTime = moment.unix(scheduleItem.endDateTime);
@@ -38,11 +38,13 @@ function createPlan(scheduleItem) {
       });
       planItem = {
         scheduleId: scheduleItem.id,
-        title: scheduleItem.groupName,
+        groupId: scheduleItem.groupId,
+        title: groups.find((grp) => (grp.groupId === scheduleItem.groupId)).name,
         allDay: false,
         start: s.toDate(),
         end: e.toDate(),
         resourceId: scheduleItem.resourceId,
+        repeat: moment.unix(scheduleItem.endDateRepeat).toDate(),
         isPlanned: true,
       };
       localPlanArray.push(planItem);
@@ -62,17 +64,16 @@ class Schedule extends React.Component {
     this.state = {
       schedule: [],
       events: [],
-      isPlanModalOpen: false,
       isAddModalOpen: false,
       isEditModalOpen: false,
       newEventData: {
-        newScheduleId: null,
+        newScheduleId: '',
         newGroupId: '',
         newTitle: '',
         newStart: 0,
         newEnd: 0,
         newResourceId: 0,
-        newRepeat: 1,
+        newRepeat: 0,
       },
     };
 
@@ -84,8 +85,6 @@ class Schedule extends React.Component {
     resourceMap = [
       { resourceId: 1, resourceTitle: 'Аудитория 1' },
       { resourceId: 2, resourceTitle: 'Аудитория 2' },
-      // { resourceId: 3, resourceTitle: 'Meeting room 1' },
-      // { resourceId: 4, resourceTitle: 'Meeting room 2' },
     ];
 
     groups = [
@@ -103,7 +102,6 @@ class Schedule extends React.Component {
       {
         id: '1',
         groupId: '123',
-        groupName: 'Математика ОГЭ8 - Петров И.',
         startDateTime: 1587213900,
         endDateTime: 1587219300,
         endDateRepeat: 1589760000,
@@ -132,7 +130,19 @@ class Schedule extends React.Component {
   };
 
   handleSelectEvent = (event) => {
-    console.log(event.title, event.start, event.end)
+    console.log(event);
+    const scheduleItem = this.state.schedule.find((schd) => (schd.id === event.scheduleId));
+    this.setState({
+      newEventData: {
+        newScheduleId: scheduleItem.id,
+        newGroupId: scheduleItem.groupId,
+        newStart: scheduleItem.startDateTime,
+        newEnd: scheduleItem.endDateTime,
+        newRepeat: scheduleItem.endDateRepeat,
+        newResourceId: scheduleItem.resourceId,
+      },
+      isEditModalOpen: true,
+    });
   };
 
   eventStyleGetter = ({ event, start, end, isSelected, isPlanned }) => {
@@ -155,17 +165,22 @@ class Schedule extends React.Component {
   };
 
   addEvent = () => {
+    if (!this.state.newEventData.newGroupId) {
+      alert('Нужно обязательно указать группу');
+      return;
+    }
+
     const newScheduleItem = {
       id: `${uuidv4()}`,
       groupId: this.state.newEventData.newGroupId,
       groupName: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
       startDateTime: this.state.newEventData.newStart,
       endDateTime: this.state.newEventData.newEnd,
-      // endDateRepeat: 1589760000,
+      endDateRepeat: this.state.newEventData.newRepeat,
       resourceId: this.state.newEventData.newResourceId,
     };
 
-    const schedule = this.state.schedule;
+    let schedule = this.state.schedule;
     schedule.push(newScheduleItem);
 
     const planArray = Array.from(schedule, createPlan);
@@ -175,14 +190,45 @@ class Schedule extends React.Component {
       schedule,
       events: eventsPlan,
       isAddModalOpen: false,
+      // newEventData: '',
+    });
+  };
+
+  editEvent = () => {
+    if (!this.state.newEventData.newGroupId) {
+      alert('Нужно обязательно указать группу');
+      return;
+    }
+
+    const newScheduleItem = {
+      id: this.state.newEventData.newScheduleId,
+      groupId: this.state.newEventData.newGroupId,
+      groupName: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
+      startDateTime: this.state.newEventData.newStart,
+      endDateTime: this.state.newEventData.newEnd,
+      endDateRepeat: this.state.newEventData.newRepeat,
+      resourceId: this.state.newEventData.newResourceId,
+    };
+
+    let schedule = this.state.schedule;
+    const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
+    schedule[i] = newScheduleItem;
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
+    this.setState({
+      schedule,
+      events: eventsPlan,
       isEditModalOpen: false,
+      // newEventData: '',
     });
   };
 
   closeModal = () => {
     this.setState({
       isAddModalOpen: false,
-      isPlanModalOpen: false,
+      isEditModalOpen: false,
     });
   };
 
@@ -225,6 +271,12 @@ class Schedule extends React.Component {
           minute: value.substr(3, 2),
         });
         attrValue = endDate.unix();
+        break;
+      }
+
+      case 'newRepeatDate': {
+        attr = 'newRepeat';
+        attrValue = moment(value).unix();
         break;
       }
 
@@ -288,6 +340,7 @@ class Schedule extends React.Component {
                   defaultValue=''
                   name='newTitle'
                   placeholder='Выберите группу'
+                  isRequired
                 />
                 <Row>
                   <Col>
@@ -314,7 +367,7 @@ class Schedule extends React.Component {
                   </Col>
                   <Col>
                     <FormGroup>
-                      <Label for='newEndTime'>Оконачание</Label>
+                      <Label for='newEndTime'>Окончание</Label>
                       <Input
                         type='time'
                         name='newEndTime'
@@ -328,22 +381,14 @@ class Schedule extends React.Component {
                 <Row>
                   <Col>
                     <FormGroup>
-                      <Label>Повтор
+                      <Label>Повторять до
                         <Input
-                          type="select"
-                          name="newRepeat"
+                          type="date"
+                          name="newRepeatDate"
                           id="repeat"
-                          value={this.state.newEventData.newRepeat}
+                          value={moment.unix(this.state.newEventData.newRepeat).format('YYYY-MM-DD') || ''}
                           onChange={this.handleInputChange}
                         >
-                          <option value="">не повторять</option>
-                          <option value="1">Понедельник</option>
-                          <option value="2">Вторник</option>
-                          <option value="3">Среда</option>
-                          <option value="4">Четверг</option>
-                          <option value="5">Пятница</option>
-                          <option value="6">Суббота</option>
-                          <option value="0">Воскресенье</option>
                         </Input>
                       </Label>
                     </FormGroup>
@@ -356,6 +401,15 @@ class Schedule extends React.Component {
               <Button color='secondary' onClick={this.closeModal}>Отмена</Button>
             </ModalFooter>
           </Modal>
+          <ModalScheduleEdit
+            isOpen={this.state.isEditModalOpen}
+            handleGroupChange={this.handleGroupChange}
+            scheduleItemData={this.state.newEventData}
+            selectGroupOptions={groupOptions}
+            handleInputChange={this.handleInputChange}
+            editEvent={this.editEvent}
+            closeModal={this.closeModal}
+          />
         </div>
       </div>
     );
