@@ -22,10 +22,10 @@ function createPlan(scheduleItem) {
   const endh = endDateTime.get('hour');
   const endm = endDateTime.get('minute');
   const weekDay = startDateTime.day();
-  for (let date = startDateTime.clone();
+  for (let date = startDateTime.clone().set({ hour: 23, minute: 59 });
     date.isSameOrBefore(endDateRepeat);
     date.add(1, 'days')) {
-    if (date.day() === weekDay) {
+    if (date.day() === weekDay && scheduleItem.exclude.indexOf(date.unix()) === -1) {
       let s = moment(date, 'YYYY-MM-DD HH:mm');
       s = s.set({
         hour: starth,
@@ -79,6 +79,8 @@ class Schedule extends React.Component {
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleGroupChange = this.handleGroupChange.bind(this);
+    this.deleteScheduleItem = this.deleteScheduleItem.bind(this);
+    this.excludeScheduleEvent = this.excludeScheduleEvent.bind(this);
   }
 
   componentDidMount() {
@@ -106,6 +108,7 @@ class Schedule extends React.Component {
         endDateTime: 1587219300,
         endDateRepeat: 1589760000,
         resourceId: 1,
+        exclude: [],
       },
     ];
 
@@ -140,6 +143,8 @@ class Schedule extends React.Component {
         newEnd: scheduleItem.endDateTime,
         newRepeat: scheduleItem.endDateRepeat,
         newResourceId: scheduleItem.resourceId,
+        eventStart: event.start.getTime() / 1000,
+        exclude: scheduleItem.exclude,
       },
       isEditModalOpen: true,
     });
@@ -178,6 +183,7 @@ class Schedule extends React.Component {
       endDateTime: this.state.newEventData.newEnd,
       endDateRepeat: this.state.newEventData.newRepeat,
       resourceId: this.state.newEventData.newResourceId,
+      exclude: [],
     };
 
     let schedule = this.state.schedule;
@@ -210,7 +216,7 @@ class Schedule extends React.Component {
       resourceId: this.state.newEventData.newResourceId,
     };
 
-    let schedule = this.state.schedule;
+    const schedule = this.state.schedule;
     const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
     schedule[i] = newScheduleItem;
 
@@ -252,6 +258,21 @@ class Schedule extends React.Component {
     let attrValue = '';
 
     switch (name) {
+      case 'newStartDate': {
+        attr = 'newStart';
+        let startDate = moment.unix(state.newEventData.newStart);
+        console.log(value.substr(0, 4),
+        value.substr(5, 2),
+        value.substr(8, 2))
+        startDate = startDate.set({
+          year: value.substr(0, 4),
+          month: value.substr(5, 2) - 1,
+          date: value.substr(8, 2),
+        });
+        attrValue = startDate.unix();
+        break;
+      }
+
       case 'newStartTime': {
         attr = 'newStart';
         let startDate = moment.unix(state.newEventData.newStart);
@@ -291,6 +312,40 @@ class Schedule extends React.Component {
         [attr]: attrValue,
       },
     }));
+  }
+
+  deleteScheduleItem() {
+    const schedule = this.state.schedule;
+    const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
+    schedule.splice(i, 1);
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
+    this.setState({
+      schedule,
+      events: eventsPlan,
+      isEditModalOpen: false,
+    });
+  }
+
+  excludeScheduleEvent() {
+    const excludeDate = moment.unix(this.state.newEventData.eventStart).set({ hour: 23, minute: 59 });
+    const schedule = this.state.schedule;
+    const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
+    const scheduleItem = schedule[i];
+    const newExclude = scheduleItem.exclude;
+    newExclude.push(excludeDate.unix());
+    schedule[i].exclude = newExclude;
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+
+    this.setState({
+      schedule,
+      events: eventsPlan,
+      isEditModalOpen: false,
+    });
   }
 
   render() {
@@ -408,6 +463,8 @@ class Schedule extends React.Component {
             selectGroupOptions={groupOptions}
             handleInputChange={this.handleInputChange}
             editEvent={this.editEvent}
+            deleteScheduleItem={this.deleteScheduleItem}
+            excludeScheduleEvent={this.excludeScheduleEvent}
             closeModal={this.closeModal}
           />
         </div>
