@@ -214,6 +214,7 @@ class Schedule extends React.Component {
       endDateTime: this.state.newEventData.newEnd,
       endDateRepeat: this.state.newEventData.newRepeat,
       resourceId: this.state.newEventData.newResourceId,
+      exclude: this.state.newEventData.exclude,
     };
 
     const schedule = this.state.schedule;
