@@ -6,92 +6,111 @@ import './css/select-search.css';
 import moment from 'moment';
 import 'moment/locale/ru';
 
+function Students(props) {
+  const students = props.students;
+  const studentsList = students.map((student) =>
+    <li key={student.id}>{student.name}</li>
+  );
+  return (
+    <ul>{studentsList}</ul>
+  );
+}
+
 class ModalScheduleEdit extends React.Component {
   render() {
     console.log(this.props)
     return (
-      <Modal isOpen={this.props.isOpen}>
+      <Modal isOpen={this.props.isOpen} size='lg'>
         <ModalHeader>Расписание занятия</ModalHeader>
         <ModalBody>
           <Form>
-            <Label>Группа</Label>
-            <SelectSearch
-              search
-              onChange={this.props.handleGroupChange}
-              value={this.props.scheduleItemData.newGroupId || ''}
-              options={this.props.selectGroupOptions}
-              defaultValue=''
-              name='newTitle'
-              placeholder='Выберите группу'
-              isRequired
-            />
+            <Label>Группа
+              <SelectSearch
+                search
+                onChange={this.props.handleGroupChange}
+                value={this.props.scheduleItemData.newGroupId || ''}
+                options={this.props.selectGroupOptions}
+                defaultValue=''
+                name='newTitle'
+                placeholder='Выберите группу'
+                isRequired
+              />
+            </Label>
             <Row>
+              <Col sm={8}>
+                <Row>
+                  <Col>
+                    <FormGroup>
+                      <Label>Начало по расписанию
+                        <Input
+                          type='date'
+                          name='newStartDate'
+                          id='newStartDate'
+                          value={moment.unix(this.props.scheduleItemData.newStart).format('YYYY-MM-DD') || ''}
+                          onChange={this.props.handleInputChange}
+                        />
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label>Повторять до
+                        <Input
+                          type="date"
+                          name="newRepeatDate"
+                          id="repeat"
+                          value={moment.unix(this.props.scheduleItemData.newRepeat).format('YYYY-MM-DD') || ''}
+                          onChange={this.props.handleInputChange}
+                        >
+                        </Input>
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col>
+                    <FormGroup>
+                      <Label>Дата урока
+                        <Input
+                          readOnly
+                          type="date"
+                          defaultValue={moment.unix(this.props.scheduleItemData.eventStart).format('YYYY-MM-DD') || ''}
+                        >
+                        </Input>
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newStartTime'>Начало
+                        <Input
+                          type='time'
+                          name='newStartTime'
+                          id='newStartTime'
+                          value={moment.unix(this.props.scheduleItemData.newStart).format('HH:mm') || ''}
+                          onChange={this.props.handleInputChange}
+                        />
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                  <Col>
+                    <FormGroup>
+                      <Label for='newEndTime'>Окончание
+                        <Input
+                          type='time'
+                          name='newEndTime'
+                          id='newEndTime'
+                          value={moment.unix(this.props.scheduleItemData.newEnd).format('HH:mm') || ''}
+                          onChange={this.props.handleInputChange}
+                        />
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row></Col>
               <Col>
-                <FormGroup>
-                  <Label>Начало по расписанию
-                    <Input
-                      type='date'
-                      name='newStartDate'
-                      id='newStartDate'
-                      value={moment.unix(this.props.scheduleItemData.newStart).format('YYYY-MM-DD') || ''}
-                      onChange={this.props.handleInputChange}
-                    />
-                  </Label>
-                </FormGroup>
-              </Col>
-              <Col>
-                <FormGroup>
-                  <Label>Повторять до
-                    <Input
-                      type="date"
-                      name="newRepeatDate"
-                      id="repeat"
-                      value={moment.unix(this.props.scheduleItemData.newRepeat).format('YYYY-MM-DD') || ''}
-                      onChange={this.props.handleInputChange}
-                    >
-                    </Input>
-                  </Label>
-                </FormGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <FormGroup>
-                  <Label>Дата урока
-                    <Input
-                      readOnly
-                      type="date"
-                      defaultValue={moment.unix(this.props.scheduleItemData.eventStart).format('YYYY-MM-DD') || ''}
-                    >
-                    </Input>
-                  </Label>
-                </FormGroup>
-              </Col>
-              <Col>
-                <FormGroup>
-                  <Label for='newStartTime'>Начало
-                    <Input
-                      type='time'
-                      name='newStartTime'
-                      id='newStartTime'
-                      value={moment.unix(this.props.scheduleItemData.newStart).format('HH:mm') || ''}
-                      onChange={this.props.handleInputChange}
-                    />
-                  </Label>
-                </FormGroup>
-              </Col>
-              <Col>
-                <FormGroup>
-                  <Label for='newEndTime'>Окончание
-                    <Input
-                      type='time'
-                      name='newEndTime'
-                      id='newEndTime'
-                      value={moment.unix(this.props.scheduleItemData.newEnd).format('HH:mm') || ''}
-                      onChange={this.props.handleInputChange}
-                    />
-                  </Label>
-                </FormGroup>
+                <Label>Студенты
+                  <Students students={this.props.students} />
+                </Label>
               </Col>
             </Row>
           </Form>

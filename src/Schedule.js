@@ -55,6 +55,7 @@ function createPlan(scheduleItem) {
 }
 
 let groups = [];
+let students = [];
 let resourceMap = [];
 
 class Schedule extends React.Component {
@@ -97,6 +98,29 @@ class Schedule extends React.Component {
       {
         groupId: '234',
         name: 'История ЕГЭ11 - Иванов П.',
+      },
+    ];
+
+    students = [
+      {
+        id: '1',
+        groups: ['123'],
+        name: 'Мальвина Селёдкина',
+      },
+      {
+        id: '2',
+        groups: ['234'],
+        name: 'Артемий Васерманн',
+      },
+      {
+        id: '3',
+        groups: ['123', '234'],
+        name: 'Пётр Васечкин',
+      },
+      {
+        id: '4',
+        groups: ['123', '234'],
+        name: 'Элла Памфилова',
       },
     ];
 
@@ -462,6 +486,8 @@ class Schedule extends React.Component {
             handleGroupChange={this.handleGroupChange}
             scheduleItemData={this.state.newEventData}
             selectGroupOptions={groupOptions}
+            students={students.filter((student) =>
+              (student.groups.indexOf(this.state.newEventData.newGroupId) !== -1))}
             handleInputChange={this.handleInputChange}
             editEvent={this.editEvent}
             deleteScheduleItem={this.deleteScheduleItem}
