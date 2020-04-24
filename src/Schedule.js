@@ -1,13 +1,20 @@
 import React from 'react';
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
-import { Modal, ModalHeader, ModalBody, ModalFooter,
-  Button, Form, FormGroup, Input, Label, Col, Row } from 'reactstrap';
+import {
+  Modal, ModalHeader, ModalBody, ModalFooter,
+  Button, Form, FormGroup, Input, Label, Col, Row,
+} from 'reactstrap';
 import SelectSearch from 'react-select-search';
 import './css/select-search.css';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import 'moment/locale/ru';
 import ModalScheduleEdit from './ModalScheduleEdit';
+
+let groups = [];
+let students = [];
+let resourceMap = [];
+let lessons = [];
 
 function createPlan(scheduleItem) {
   let planItem = {};
@@ -22,10 +29,14 @@ function createPlan(scheduleItem) {
   const endh = endDateTime.get('hour');
   const endm = endDateTime.get('minute');
   const weekDay = startDateTime.day();
-  for (let date = startDateTime.clone().set({ hour: 23, minute: 59 });
+  const lessonsDates = scheduleItem.lessons.map((lesson) => lessons.find((lsn) => (lsn.id === lesson)).start.getTime() / 1000);
+
+  for (let date = startDateTime.clone();
     date.isSameOrBefore(endDateRepeat);
     date.add(1, 'days')) {
-    if (date.day() === weekDay && scheduleItem.exclude.indexOf(date.unix()) === -1) {
+    if (date.day() === weekDay
+    && scheduleItem.exclude.indexOf(date.unix()) === -1
+    && lessonsDates.indexOf(date.unix()) === -1) {
       let s = moment(date, 'YYYY-MM-DD HH:mm');
       s = s.set({
         hour: starth,
@@ -45,7 +56,7 @@ function createPlan(scheduleItem) {
         end: e.toDate(),
         resourceId: scheduleItem.resourceId,
         repeat: moment.unix(scheduleItem.endDateRepeat).toDate(),
-        isPlanned: true,
+        status: 0,
       };
       localPlanArray.push(planItem);
     }
@@ -53,10 +64,6 @@ function createPlan(scheduleItem) {
 
   return localPlanArray;
 }
-
-let groups = [];
-let students = [];
-let resourceMap = [];
 
 class Schedule extends React.Component {
   constructor(...args) {
@@ -110,7 +117,7 @@ class Schedule extends React.Component {
       {
         id: '2',
         groups: ['234'],
-        name: 'Артемий Васерманн',
+        name: 'Артемий Вассерман',
       },
       {
         id: '3',
@@ -133,15 +140,45 @@ class Schedule extends React.Component {
         endDateRepeat: 1589760000,
         resourceId: 1,
         exclude: [],
+        lessons: ['1', '2'],
+      },
+    ];
+
+    lessons = [
+      {
+        id: '1',
+        scheduleId: '1',
+        groupId: '234',
+        title: groups.find((grp) => (grp.groupId === '234')).name,
+        allDay: false,
+        start: new Date(2020, 3, 23, 10),
+        end: new Date(2020, 3, 23, 12),
+        resourceId: 1,
+        repeat: '',
+        status: 1,
+      },
+      {
+        id: '2',
+        scheduleId: '1',
+        groupId: '123',
+        title: groups.find((grp) => (grp.groupId === '123')).name,
+        allDay: false,
+        start: new Date(1587213900000),
+        end: new Date(1587219300000),
+        resourceId: 1,
+        repeat: '',
+        status: 1,
       },
     ];
 
     const planArray = Array.from(schedule, createPlan);
     const eventsPlan = [].concat.apply([], planArray);
+    const events = eventsPlan.concat(lessons);
 
     this.setState({
       schedule,
-      events: eventsPlan,
+      lessons,
+      events,
     });
   }
 
@@ -157,7 +194,6 @@ class Schedule extends React.Component {
   };
 
   handleSelectEvent = (event) => {
-    console.log(event);
     const scheduleItem = this.state.schedule.find((schd) => (schd.id === event.scheduleId));
     this.setState({
       newEventData: {
@@ -168,13 +204,15 @@ class Schedule extends React.Component {
         newRepeat: scheduleItem.endDateRepeat,
         newResourceId: scheduleItem.resourceId,
         eventStart: event.start.getTime() / 1000,
+        eventEnd: event.end.getTime() / 1000,
         exclude: scheduleItem.exclude,
+        lessons: scheduleItem.lessons,
       },
       isEditModalOpen: true,
     });
   };
 
-  eventStyleGetter = ({ event, start, end, isSelected, isPlanned }) => {
+  eventStyleGetter = ({ event, start, end, isSelected, status }) => {
     let style = {
       backgroundColor: '',
       borderRadius: '0px',
@@ -184,9 +222,16 @@ class Schedule extends React.Component {
       display: 'block',
     };
 
-    if (isPlanned) {
-      style.backgroundColor = 'green';
-    }
+    switch (status) {
+      case 0:
+        style.backgroundColor = 'grey';
+        break;
+      case 1:
+        style.backgroundColor = 'blue';
+        break;
+      default:
+
+    };
 
     return {
       style,
@@ -239,6 +284,7 @@ class Schedule extends React.Component {
       endDateRepeat: this.state.newEventData.newRepeat,
       resourceId: this.state.newEventData.newResourceId,
       exclude: this.state.newEventData.exclude,
+      lessons: this.state.newEventData.lessons,
     };
 
     const schedule = this.state.schedule;
@@ -286,7 +332,6 @@ class Schedule extends React.Component {
       case 'newStartDate': {
         attr = 'newStart';
         let startDate = moment.unix(state.newEventData.newStart);
-        console.log(value.substr(0, 4),
         value.substr(5, 2),
         value.substr(8, 2))
         startDate = startDate.set({
@@ -373,6 +418,42 @@ class Schedule extends React.Component {
     });
   }
 
+  conductLesson = () => {
+    const conductDate = moment.unix(this.state.newEventData.eventStart);
+    const schedule = this.state.schedule;
+    const lessons = this.state.lessons;
+    const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
+    const scheduleItem = schedule[i];
+    const scheduleLessons = scheduleItem.lessons;
+
+    const newLesson = {
+      id: `${uuidv4()}`,
+      scheduleId: scheduleItem.id,
+      groupId: this.state.newEventData.newGroupId,
+      title: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
+      allDay: false,
+      start: new Date(this.state.newEventData.eventStart * 1000),
+      end: new Date(this.state.newEventData.eventEnd * 1000),
+      resourceId: 1,
+      repeat: '',
+      status: 1,
+    };
+
+    lessons.push(newLesson);
+    schedule[i].lessons.push(newLesson.id);
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+    const events = eventsPlan.concat(lessons);
+
+    this.setState({
+      schedule,
+      lessons,
+      events,
+      isEditModalOpen: false,
+    });
+  }
+
   render() {
     moment.locale('ru-RU');
     const localizer = momentLocalizer(moment);
@@ -400,7 +481,7 @@ class Schedule extends React.Component {
             max={maxTime}
             defaultDate={new Date()}
             onSelectEvent={this.handleSelectEvent}
-            onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
+            // onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
             onSelectSlot={this.handleSelect}
             eventPropGetter={this.eventStyleGetter}
             resources={resourceMap}
@@ -490,6 +571,7 @@ class Schedule extends React.Component {
               (student.groups.indexOf(this.state.newEventData.newGroupId) !== -1))}
             handleInputChange={this.handleInputChange}
             editEvent={this.editEvent}
+            conductLesson={this.conductLesson}
             deleteScheduleItem={this.deleteScheduleItem}
             excludeScheduleEvent={this.excludeScheduleEvent}
             closeModal={this.closeModal}

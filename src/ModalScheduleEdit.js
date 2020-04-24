@@ -41,7 +41,7 @@ class ModalScheduleEdit extends React.Component {
                 <Row>
                   <Col>
                     <FormGroup>
-                      <Label>Начало по расписанию
+                      <Label>Начало расписания
                         <Input
                           type='date'
                           name='newStartDate'
@@ -68,7 +68,7 @@ class ModalScheduleEdit extends React.Component {
                   </Col>
                 </Row>
                 <Row>
-                  <Col>
+                  <Col sm={5}>
                     <FormGroup>
                       <Label>Дата урока
                         <Input
@@ -80,7 +80,7 @@ class ModalScheduleEdit extends React.Component {
                       </Label>
                     </FormGroup>
                   </Col>
-                  <Col>
+                  <Col sm={3}>
                     <FormGroup>
                       <Label for='newStartTime'>Начало
                         <Input
@@ -106,7 +106,8 @@ class ModalScheduleEdit extends React.Component {
                       </Label>
                     </FormGroup>
                   </Col>
-                </Row></Col>
+                </Row>
+              </Col>
               <Col>
                 <Label>Студенты
                   <Students students={this.props.students} />
@@ -116,6 +117,7 @@ class ModalScheduleEdit extends React.Component {
           </Form>
         </ModalBody>
         <ModalFooter>
+          <Button color='success' onClick={this.props.conductLesson}>Провести урок</Button>{' '}
           <Button color='primary' onClick={this.props.editEvent}>Изменить расписание</Button>{' '}
           <Button color='warning'
             onClick={this.props.excludeScheduleEvent}>Отменить урок</Button>{' '}
