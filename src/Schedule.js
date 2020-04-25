@@ -332,8 +332,6 @@ class Schedule extends React.Component {
       case 'newStartDate': {
         attr = 'newStart';
         let startDate = moment.unix(state.newEventData.newStart);
-        value.substr(5, 2),
-        value.substr(8, 2))
         startDate = startDate.set({
           year: value.substr(0, 4),
           month: value.substr(5, 2) - 1,
