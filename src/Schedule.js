@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import 'moment/locale/ru';
 import ModalScheduleEdit from './ModalScheduleEdit';
+import ModalLesson from './ModalLesson';
 
 let groups = [];
 let students = [];
@@ -72,8 +73,10 @@ class Schedule extends React.Component {
     this.state = {
       schedule: [],
       events: [],
+      lessons: [],
       isAddModalOpen: false,
       isEditModalOpen: false,
+      isLessonOpen: false,
       newEventData: {
         newScheduleId: '',
         newGroupId: '',
@@ -82,6 +85,7 @@ class Schedule extends React.Component {
         newEnd: 0,
         newResourceId: 0,
         newRepeat: 0,
+
       },
     };
 
@@ -194,22 +198,49 @@ class Schedule extends React.Component {
   };
 
   handleSelectEvent = (event) => {
-    const scheduleItem = this.state.schedule.find((schd) => (schd.id === event.scheduleId));
-    this.setState({
-      newEventData: {
-        newScheduleId: scheduleItem.id,
-        newGroupId: scheduleItem.groupId,
-        newStart: scheduleItem.startDateTime,
-        newEnd: scheduleItem.endDateTime,
-        newRepeat: scheduleItem.endDateRepeat,
-        newResourceId: scheduleItem.resourceId,
-        eventStart: event.start.getTime() / 1000,
-        eventEnd: event.end.getTime() / 1000,
-        exclude: scheduleItem.exclude,
-        lessons: scheduleItem.lessons,
-      },
-      isEditModalOpen: true,
-    });
+    if (event.status === 0) {
+      const scheduleItem = this.state.schedule.find((schd) => (schd.id === event.scheduleId));
+      this.setState({
+        newEventData: {
+          newScheduleId: scheduleItem.id,
+          newGroupId: scheduleItem.groupId,
+          newStart: scheduleItem.startDateTime,
+          newEnd: scheduleItem.endDateTime,
+          newRepeat: scheduleItem.endDateRepeat,
+          newResourceId: scheduleItem.resourceId,
+          eventStart: event.start.getTime() / 1000,
+          eventEnd: event.end.getTime() / 1000,
+          exclude: scheduleItem.exclude,
+          lessons: scheduleItem.lessons,
+          status: scheduleItem.status,
+        },
+        isEditModalOpen: true,
+      });
+    } else if (event.status === 1) {
+      const lesson = this.state.lessons.find((lsn) => (lsn.id === event.id));
+      this.setState({
+        newEventData: {
+          id: lesson.id,
+          newScheduleId: lesson.scheduleId,
+          newGroupId: lesson.groupId,
+          newResourceId: lesson.resourceId,
+          newStart: event.start.getTime() / 1000,
+          newEnd: event.end.getTime() / 1000,
+        },
+        isLessonOpen: true,
+
+        // id: `${uuidv4()}`,
+        // scheduleId: scheduleItem.id,
+        // groupId: this.state.newEventData.newGroupId,
+        // title: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
+        // allDay: false,
+        // start: new Date(this.state.newEventData.eventStart * 1000),
+        // end: new Date(this.state.newEventData.eventEnd * 1000),
+        // resourceId: 1,
+        // repeat: '',
+        // status: 1,
+      });
+    }
   };
 
   eventStyleGetter = ({ event, start, end, isSelected, status }) => {
@@ -253,13 +284,15 @@ class Schedule extends React.Component {
       endDateRepeat: this.state.newEventData.newRepeat,
       resourceId: this.state.newEventData.newResourceId,
       exclude: [],
+      lessons: [],
     };
 
     let schedule = this.state.schedule;
     schedule.push(newScheduleItem);
 
     const planArray = Array.from(schedule, createPlan);
-    const eventsPlan = [].concat.apply([], planArray);
+    const newEventsPlan = [].concat.apply([], planArray);
+    const eventsPlan = this.state.lessons.concat(newEventsPlan);
 
     this.setState({
       schedule,
@@ -302,10 +335,39 @@ class Schedule extends React.Component {
     });
   };
 
+  editLesson = () => {
+    const schedule = this.state.schedule;
+    const conductDate = moment.unix(this.state.newEventData.eventStart);
+    const lessons = this.state.lessons;
+    const i = lessons.findIndex((lsn) => (lsn.id === this.state.newEventData.id));
+    const oldLesson = lessons[i];
+
+    const newLesson = {
+      ...oldLesson,
+      start: new Date(this.state.newEventData.newStart * 1000),
+      end: new Date(this.state.newEventData.newEnd * 1000),
+    };
+
+    lessons[i] = newLesson;
+
+    const planArray = Array.from(schedule, createPlan);
+    const eventsPlan = [].concat.apply([], planArray);
+    const events = eventsPlan.concat(lessons);
+
+    this.setState({
+      schedule,
+      lessons,
+      events,
+      isEditModalOpen: false,
+      isLessonOpen: false,
+    });
+  };
+
   closeModal = () => {
     this.setState({
       isAddModalOpen: false,
       isEditModalOpen: false,
+      isLessonOpen: false,
     });
   };
 
@@ -449,6 +511,7 @@ class Schedule extends React.Component {
       lessons,
       events,
       isEditModalOpen: false,
+      isLessonOpen: true,
     });
   }
 
@@ -572,6 +635,20 @@ class Schedule extends React.Component {
             conductLesson={this.conductLesson}
             deleteScheduleItem={this.deleteScheduleItem}
             excludeScheduleEvent={this.excludeScheduleEvent}
+            closeModal={this.closeModal}
+          />
+          <ModalLesson
+            isOpen={this.state.isLessonOpen}
+            lessonData={this.state.newEventData}
+            group={groups.find((grp) =>
+              (grp.groupId === this.state.newEventData.newGroupId))}
+            students={students.filter((student) =>
+              (student.groups.indexOf(this.state.newEventData.newGroupId) !== -1))}
+            handleInputChange={this.handleInputChange}
+            editLesson={this.editLesson}
+            // conductLesson={this.conductLesson}
+            // deleteScheduleItem={this.deleteScheduleItem}
+            // excludeScheduleEvent={this.excludeScheduleEvent}
             closeModal={this.closeModal}
           />
         </div>

@@ -18,7 +18,6 @@ function Students(props) {
 
 class ModalScheduleEdit extends React.Component {
   render() {
-    console.log(this.props)
     return (
       <Modal isOpen={this.props.isOpen} size='lg'>
         <ModalHeader>Расписание занятия</ModalHeader>
@@ -122,7 +121,7 @@ class ModalScheduleEdit extends React.Component {
           <Button color='warning'
             onClick={this.props.excludeScheduleEvent}>Отменить урок</Button>{' '}
           <Button color='danger' onClick={this.props.deleteScheduleItem}>Удалить расписание</Button>{' '}
-          <Button color='secondary' onClick={this.props.closeModal}>Отмена</Button>
+          <Button color='secondary' onClick={this.props.closeModal}>Закрыть</Button>
         </ModalFooter>
       </Modal>
     )
