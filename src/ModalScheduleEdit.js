@@ -32,7 +32,6 @@ class ModalScheduleEdit extends React.Component {
                 defaultValue=''
                 name='newTitle'
                 placeholder='Выберите группу'
-                isRequired
               />
             </Label>
             <Row>
