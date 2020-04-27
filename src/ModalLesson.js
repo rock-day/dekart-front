@@ -76,7 +76,7 @@ class ModalLesson extends React.Component {
           </Form>
         </ModalBody>
         <ModalFooter>
-          <Button color='primary' onClick={this.props.editLesson}>Изменить</Button>{' '}
+          <Button color='primary' onClick={this.props.editLesson}>Сохранить</Button>{' '}
           <Button color='danger' onClick={this.props.deleteLesson}>Удалить</Button>{' '}
           <Button color='secondary' onClick={this.props.closeModal}>Закрыть</Button>
         </ModalFooter>
