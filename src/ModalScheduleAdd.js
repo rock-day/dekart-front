@@ -23,17 +23,17 @@ function ModalScheduleAdd(props) {
             placeholder='Выберите группу'
           />
           <Row>
-            <Col>
+            <Col md={4}>
               <FormGroup>
                 <Label for='newStartDate'>Дата</Label>
                 <Input readOnly
-                  type='date'
+                  type='text'
                   id='newStartDate'
                   value={moment.unix(props.scheduleItemData.newStart).format('YYYY-MM-DD') || ''}
                 />
               </FormGroup>
             </Col>
-            <Col>
+            <Col md={4}>
               <FormGroup>
                 <Label for='newStartTime'>Начало</Label>
                 <Input
@@ -45,7 +45,7 @@ function ModalScheduleAdd(props) {
                 />
               </FormGroup>
             </Col>
-            <Col>
+            <Col md={4}>
               <FormGroup>
                 <Label for='newEndTime'>Окончание</Label>
                 <Input

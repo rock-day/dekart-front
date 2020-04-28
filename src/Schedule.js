@@ -11,6 +11,7 @@ let groups = [];
 let students = [];
 let resourceMap = [];
 let lessons = [];
+let studentLessons = [];
 
 function createPlan(scheduleItem) {
   let planItem = {};
@@ -73,6 +74,7 @@ class Schedule extends React.Component {
       schedule: [],
       events: [],
       lessons: [],
+      studentLessons: [],
       isAddModalOpen: false,
       isEditModalOpen: false,
       isLessonModalOpen: false,
@@ -138,7 +140,7 @@ class Schedule extends React.Component {
       {
         id: '3',
         groups: ['123', '234'],
-        name: 'Пётр Васечкин',
+        name: 'Пётр Васечкинffffffffffff Васечкинffffffffffff',
       },
       {
         id: '4',
@@ -167,8 +169,8 @@ class Schedule extends React.Component {
         groupId: '234',
         title: groups.find((grp) => (grp.groupId === '234')).name,
         allDay: false,
-        start: new Date(2020, 3, 23, 10),
-        end: new Date(2020, 3, 23, 12),
+        start: new Date(2020, 3, 28, 10),
+        end: new Date(2020, 3, 28, 12),
         resourceId: 1,
         repeat: '',
         status: 1,
@@ -439,6 +441,7 @@ class Schedule extends React.Component {
   deleteLesson() {
     const schedule = this.state.schedule;
     const lessons = this.state.lessons;
+    let studentLessons = this.state.studentLessons;
     const i = lessons.findIndex((lsn) => (lsn.id === this.state.newEventData.id));
     const lessonId = lessons[i].id;
     const j = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
@@ -448,10 +451,12 @@ class Schedule extends React.Component {
     newScheduleItem.lessons.splice(k, 1);
     schedule[j] = newScheduleItem;
     lessons.splice(i, 1);
+    studentLessons = studentLessons.filter((sl) => (sl.lessonId !== lessonId));
 
     this.updateEvents(schedule, lessons);
 
     this.setState({
+      studentLessons,
       isLessonModalOpen: false,
     });
   }
@@ -476,6 +481,8 @@ class Schedule extends React.Component {
   conductLesson = () => {
     const schedule = this.state.schedule;
     const lessons = this.state.lessons;
+    let studentLessons = this.state.studentLessons;
+
     const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
     const scheduleItem = schedule[i];
 
@@ -492,14 +499,25 @@ class Schedule extends React.Component {
       status: 1,
     };
 
+    const newStudentLessons = students
+      .filter((student) => (student.groups.indexOf(this.state.newEventData.newGroupId) !== -1))
+      .map((student) => ({
+        id: `${uuidv4()}`,
+        lessonId: newLesson.id,
+        studentId: student.id,
+        studentName: student.name,
+        isExcuse: false,
+        comment: ''
+      }));
+
     lessons.push(newLesson);
     schedule[i].lessons.push(newLesson.id);
+    studentLessons = studentLessons.concat(newStudentLessons);
 
-    const planArray = Array.from(schedule, createPlan);
-    const eventsPlan = [].concat.apply([], planArray);
-    const events = eventsPlan.concat(lessons);
+    this.updateEvents(schedule, lessons);
 
     this.setState({
+      studentLessons,
       newEventData: {
         id: newLesson.id,
         newScheduleId: newLesson.scheduleId,
@@ -508,9 +526,6 @@ class Schedule extends React.Component {
         newStart: newLesson.start.getTime() / 1000,
         newEnd: newLesson.end.getTime() / 1000,
       },
-      schedule,
-      lessons,
-      events,
       isEditModalOpen: false,
       isLessonModalOpen: true,
     });
@@ -577,8 +592,7 @@ class Schedule extends React.Component {
             lessonData={this.state.newEventData}
             group={groups.find((grp) =>
               (grp.groupId === this.state.newEventData.newGroupId))}
-            students={students.filter((student) =>
-              (student.groups.indexOf(this.state.newEventData.newGroupId) !== -1))}
+            studentLessons={this.state.studentLessons.filter((sl) => (sl.lessonId === this.state.newEventData.id))}
             handleInputChange={this.handleInputChange}
             editLesson={this.editLesson}
             deleteLesson={this.deleteLesson}
