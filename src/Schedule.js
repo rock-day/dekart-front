@@ -84,7 +84,6 @@ class Schedule extends React.Component {
         newEnd: 0,
         newResourceId: 0,
         newRepeat: 0,
-
       },
     };
 
@@ -235,20 +234,9 @@ class Schedule extends React.Component {
           newEnd: event.end.getTime() / 1000,
         },
         isLessonModalOpen: true,
-
-        // id: `${uuidv4()}`,
-        // scheduleId: scheduleItem.id,
-        // groupId: this.state.newEventData.newGroupId,
-        // title: groups.find((grp) => (grp.groupId === this.state.newEventData.newGroupId)).name,
-        // allDay: false,
-        // start: new Date(this.state.newEventData.eventStart * 1000),
-        // end: new Date(this.state.newEventData.eventEnd * 1000),
-        // resourceId: 1,
-        // repeat: '',
-        // status: 1,
       });
     }
-  };
+  }
 
   eventStyleGetter = ({ event, start, end, isSelected, status }) => {
     let style = {
@@ -268,8 +256,7 @@ class Schedule extends React.Component {
         style.backgroundColor = 'blue';
         break;
       default:
-
-    };
+    }
 
     return {
       style,
@@ -301,7 +288,6 @@ class Schedule extends React.Component {
 
     this.setState({
       isAddModalOpen: false,
-      // newEventData: '',
     });
   };
 
@@ -332,13 +318,11 @@ class Schedule extends React.Component {
 
     this.setState({
       isEditModalOpen: false,
-      // newEventData: '',
     });
   };
 
   editLesson = () => {
     const schedule = this.state.schedule;
-    // const conductDate = moment.unix(this.state.newEventData.eventStart);
     const lessons = this.state.lessons;
     const i = lessons.findIndex((lsn) => (lsn.id === this.state.newEventData.id));
     const oldLesson = lessons[i];
@@ -490,12 +474,10 @@ class Schedule extends React.Component {
   }
 
   conductLesson = () => {
-    // const conductDate = moment.unix(this.state.newEventData.eventStart);
     const schedule = this.state.schedule;
     const lessons = this.state.lessons;
     const i = schedule.findIndex((schd) => (schd.id === this.state.newEventData.newScheduleId));
     const scheduleItem = schedule[i];
-    // const scheduleLessons = scheduleItem.lessons;
 
     const newLesson = {
       id: `${uuidv4()}`,
@@ -561,7 +543,6 @@ class Schedule extends React.Component {
             max={maxTime}
             defaultDate={new Date()}
             onSelectEvent={this.handleSelectEvent}
-            // onDoubleClickEvent={event => event.isPlanned = !event.isPlanned}
             onSelectSlot={this.handleSelect}
             eventPropGetter={this.eventStyleGetter}
             resources={resourceMap}
