@@ -95,6 +95,7 @@ class Schedule extends React.Component {
     this.excludeScheduleEvent = this.excludeScheduleEvent.bind(this);
     this.updateEvents = this.updateEvents.bind(this);
     this.deleteLesson = this.deleteLesson.bind(this);
+    this.handleStudentLessonChange = this.handleStudentLessonChange.bind(this);
   }
 
   updateEvents(schedule, lessons) {
@@ -362,6 +363,34 @@ class Schedule extends React.Component {
     }));
   }
 
+  handleStudentLessonChange(event) {
+    const name = event.target.name;
+    const studentLessonId = event.target.id;
+    let studentLessons = this.state.studentLessons;
+    const i = studentLessons.findIndex((lsn) => (lsn.id === studentLessonId));
+    const newStudentLesson = studentLessons[i];
+
+    switch (name) {
+      case 'isExcuse': {
+        const checked = event.target.checked;
+        newStudentLesson.isExcuse = checked;
+        break;
+      }
+      case 'comment': {
+        const comment = event.target.value;
+        newStudentLesson.comment = comment;
+        break;
+      }
+      default:
+    }
+
+    studentLessons[i] = newStudentLesson;
+
+    this.setState({
+      studentLessons,
+    })
+  }
+
   handleInputChange(event) {
     const target = event.target;
     const value = target.value;
@@ -594,6 +623,7 @@ class Schedule extends React.Component {
               (grp.groupId === this.state.newEventData.newGroupId))}
             studentLessons={this.state.studentLessons.filter((sl) => (sl.lessonId === this.state.newEventData.id))}
             handleInputChange={this.handleInputChange}
+            handleStudentLessonChange={this.handleStudentLessonChange}
             editLesson={this.editLesson}
             deleteLesson={this.deleteLesson}
             closeModal={this.closeModal}

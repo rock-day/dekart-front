@@ -11,15 +11,26 @@ function Students(props) {
       <tr key={sl.id}>
         <td>{sl.studentName}</td>
         <td align='right'>
-          <Input type='checkbox' id={sl.id} value={sl.isExcuse} />{' '}
+          <Input
+            type='checkbox'
+            name='isExcuse'
+            id={sl.id}
+            checked={sl.isExcuse}
+            onChange={props.handleStudentLessonChange}
+          />
         </td>
         <td>
           {
             sl.isExcuse
               ?
               <div>
-                <Input type='text' value={sl.comment} />
-                <Input type='file' />
+                <Input
+                  type='text'
+                  name='comment'
+                  id={sl.id}
+                  value={sl.comment}
+                  onChange={props.handleStudentLessonChange}
+                />
               </div>
               : null
           }
@@ -93,13 +104,13 @@ function ModalLesson(props) {
             </Col>
           </Row>
           <FormGroup>
-            <Students studentLessons={props.studentLessons} />
+            <Students studentLessons={props.studentLessons} handleStudentLessonChange={props.handleStudentLessonChange}/>
           </FormGroup>
         </Form>
       </ModalBody>
       <ModalFooter>
         <Button color='primary' onClick={props.editLesson}>Сохранить</Button>{' '}
-        <Button color='warning' onClick={props.deleteLesson}>Отменить</Button>{' '}
+        <Button color='warning' onClick={props.deleteLesson}>Отменить урок</Button>{' '}
         <Button color='secondary' onClick={props.closeModal}>Закрыть</Button>
       </ModalFooter>
     </Modal>

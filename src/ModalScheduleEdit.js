@@ -124,7 +124,7 @@ function ModalScheduleEdit(props) {
         <Button color='success' onClick={props.conductLesson}>Провести урок</Button>{' '}
         <Button color='primary' onClick={props.editEvent}>Сохранить</Button>{' '}
         <Button color='warning'
-          onClick={props.excludeScheduleEvent}>Отменить</Button>{' '}
+          onClick={props.excludeScheduleEvent}>Отменить урок</Button>{' '}
         <Button color='danger' onClick={props.deleteScheduleItem}>Удалить</Button>{' '}
         <Button color='secondary' onClick={props.closeModal}>Закрыть</Button>
       </ModalFooter>
