@@ -1,6 +1,7 @@
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { Input, Table, Container, Row, Col } from 'reactstrap';
+import { Input, Table, Container, Row, Col, Button, NavLink, Label, FormGroup, Form } from 'reactstrap';
+import { Link } from 'react-router-dom';
+import Student from './Student';
 
 let students = [];
 
@@ -56,17 +57,42 @@ class Students extends React.Component {
     const studentsTable = this.state.students.map((st) => {
       return (
         <tr key={st.id} align="left">
-          <td>{st.name}</td>
+          <td>
+            <NavLink
+              tag={Link}
+              to={{
+                pathname: '/student',
+                state: {
+                  studentId: st.id,
+                }
+              }}>
+            {st.name}
+            </NavLink>
+          </td>
         </tr>
       );
     });
+    const studentId = 135
 
     return (
       <div>
-        <Container>
+        <Container fluid={true}>
           <Row>
-            <Col sm={{ size: 4 }}>
+            <Col xs="2">
+              <NavLink
+                tag={Link}
+                to={{
+                  pathname: '/student',
+                  state: {
+                    studentId: studentId,
+                  }
+                }}>
+              Добавить студента
+              </NavLink>
+            </Col>
+            <Col xs="4">
               <Input
+                id="search"
                 type="text"
                 name="filter"
                 value={this.state.filter}
