@@ -3,9 +3,9 @@ import './App.css';
 import {BrowserRouter, Route} from 'react-router-dom';
 
 import Nav from './Nav';
-import Schedule from './Schedule'
+import Schedule from './Schedule';
+import Students from './Students';
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-//import ExampleControlSlot from '../ExampleControlSlot'
 
 function App() {
   return (
@@ -15,6 +15,9 @@ function App() {
         <div>
           <Route path='/schedule'>
             <Schedule />
+          </Route>
+          <Route path='/students'>
+            <Students />
           </Route>
         </div>
       </div>
