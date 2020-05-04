@@ -5,6 +5,7 @@ import Student from './Student';
 import { v4 as uuidv4 } from 'uuid';
 
 let students = [];
+let studentsFilter = [];
 
 class Students extends React.Component {
   constructor(...args) {
@@ -12,6 +13,7 @@ class Students extends React.Component {
 
     this.state = {
       students,
+      studentsFilter,
       filter: '',
     };
 
@@ -19,89 +21,45 @@ class Students extends React.Component {
   }
 
   componentDidMount() {
-    students = [
-      {
-        id: '1',
-        groups: ['123'],
-        name: 'Мальвина Селёдкина',
-        fname: 'Мальвина',
-        sname: 'Селёдкина',
-        mname: 'Ивановна',
-        birthday: '',
-        phone: '111-11-11',
-        email: '',
-        address: '',
-      },
-      {
-        id: '2',
-        groups: ['234'],
-        name: 'Артемий Вассерман',
-        fname: 'Артемий',
-        sname: 'Вассерман',
-        mname: 'Иванович',
-        birthday: '',
-        phone: '222-22-22',
-        email: '',
-        address: '',
-      },
-      {
-        id: '3',
-        groups: ['123', '234'],
-        name: 'Пётр Васечкин',
-        fname: 'Пётр',
-        sname: 'Васечкин',
-        mname: 'Иванович',
-        birthday: '',
-        phone: '333-33-33',
-        email: '',
-        address: '',
-      },
-      {
-        id: '4',
-        groups: ['123', '234'],
-        name: 'Элла Памфилова',
-        fname: 'Элла',
-        sname: 'Памфилова',
-        mname: 'Ивановна',
-        birthday: '',
-        phone: '444-44-44',
-        email: '',
-        address: '',
-      },
-    ];
+    this.getStudents();
+  }
 
-    this.setState({
-      students,
-    })
+  getStudents() {
+    fetch('http://localhost:5000/api/v1/students')
+      .then((res) => res.json())
+      .then((data) => {
+        this.setState({ students: data.data, studentsFilter: data.data });
+      })
+      .catch(console.log);
   }
 
   handleFilterChange(event) {
     this.setState({
       filter: event.target.value,
-      students: students.filter((st) => (st.name.toLowerCase().includes(event.target.value.toLowerCase()))),
+      studentsFilter: this.state.students.filter((st) => (st.lastname.toLowerCase().includes(event.target.value.toLowerCase()) || st.firstname.toLowerCase().includes(event.target.value.toLowerCase()))),
     });
   }
 
   render() {
-    const studentsTable = this.state.students.map((st) => {
+    const studentsTable = this.state.studentsFilter.map((st) => {
       return (
-        <tr key={st.id} align="left">
+        <tr key={st.uuid} align="left">
           <td>
             <NavLink
               tag={Link}
               to={{
                 pathname: '/student/',
                 state: {
-                  studentId: st.id,
+                  studentId: st.uuid,
                   returnPath: '/students/',
                 },
               }}
             >
-              {st.name}
+              {st.firstname + ' ' + st.lastname}
             </NavLink>
           </td>
           <td>
-            <p>{st.phone}</p>
+            <p></p>
           </td>
         </tr>
       );

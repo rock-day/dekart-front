@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import moment from 'moment';
 import 'moment/locale/ru';
 
-let students = [];
 let returnPath = '';
 let studentId = '';
 
@@ -12,15 +11,14 @@ class Student extends React.Component {
   constructor(...props) {
     super(...props);
     this.state = {
-      students,
       student: {
-        id: '',
+        uuid: '',
         groups: [],
-        name: '',
-        fname: '',
+        lastname: '',
+        firstname: '',
         sname: '',
-        mname: '',
-        birthday: '',
+        middlename: '',
+        birthdate: '',
         phone: '',
         email: '',
         address: '',
@@ -28,84 +26,34 @@ class Student extends React.Component {
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.saveStudent = this.saveStudent.bind(this);
+    this.deleteStudent = this.deleteStudent.bind(this);
   }
 
   componentDidMount() {
-    // console.log('props', this.props)
-    // const { handle } = this.props.match.params;
-    // const { studentId } = this.props.location.state;
-    students = [
-      {
-        id: '1',
-        groups: ['123'],
-        name: 'Мальвина Селёдкина',
-        fname: 'Мальвина',
-        sname: 'Селёдкина',
-        mname: 'Ивановна',
-        birthday: 1588258404,
-        phone: '111-11-11',
-        email: '',
-        address: '',
-      },
-      {
-        id: '2',
-        groups: ['234'],
-        name: 'Артемий Вассерман',
-        fname: 'Артемий',
-        sname: 'Вассерман',
-        mname: 'Иванович',
-        birthday: 1588258404,
-        phone: '222-22-22',
-        email: '',
-        address: '',
-      },
-      {
-        id: '3',
-        groups: ['123', '234'],
-        name: 'Пётр Васечкин',
-        fname: 'Пётр',
-        sname: 'Васечкин',
-        mname: 'Иванович',
-        birthday: 1588258404,
-        phone: '333-33-33',
-        email: '',
-        address: '',
-      },
-      {
-        id: '4',
-        groups: ['123', '234'],
-        name: 'Элла Памфилова',
-        fname: 'Элла',
-        sname: 'Памфилова',
-        mname: 'Ивановна',
-        birthday: 1588258404,
-        phone: '444-44-44',
-        email: '',
-        address: '',
-      },
-    ];
-
-    this.setState({
-      students,
-    });
-
     returnPath = this.props.location.state ? this.props.location.state.returnPath : '';
-    studentId = this.props.location.state ? this.props.location.state.studentId : '';
+    if (this.props.location.state) {
+      studentId = this.props.location.state.studentId;
+      this.getStudent(studentId);
+    }
+  }
 
-    const i = students.findIndex((st) => (st.id === studentId));
-    const student = students[i];
-    if (student) {
-      this.setState({
-        student,
-      });
-    }
-    else {
-      this.setState({
-        student: {
-          id: studentId,
-        },
-      });
-    }
+  getStudent(studentId) {
+    const url = 'http://localhost:5000/api/v1/students/' + studentId;
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.data) {
+          this.setState({ student: data.data });
+        } else {
+          this.setState({
+            student: {
+              uuid: studentId,
+            },
+          });
+        }
+      })
+      .catch(console.log);
   }
 
   handleInputChange(event) {
@@ -116,9 +64,9 @@ class Student extends React.Component {
     let attrValue = '';
 
     switch (name) {
-      case 'birthday': {
-        attr = 'birthday';
-        attrValue = moment(value).unix();
+      case 'birthdate': {
+        attr = 'birthdate';
+        attrValue = value;
         break;
       }
 
@@ -135,6 +83,33 @@ class Student extends React.Component {
     }));
   }
 
+  saveStudent() {
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uuid: this.state.student.uuid,
+        lastname: this.state.student.lastname,
+        firstname: this.state.student.firstname,
+        middlename: this.state.student.middlename,
+        birthdate: this.state.student.birthdate ? moment(this.state.student.birthdate).format('YYYY-MM-DD') : null,
+      }),
+    };
+    fetch('http://localhost:5000/api/v1/students', requestOptions)
+      .then(response => response.json())
+      // .then(data => this.setState({ postId: data.id }));
+  }
+
+  deleteStudent() {
+    const requestOptions = {
+      method: 'DELETE',
+    };
+    const url = 'http://localhost:5000/api/v1/students/' + studentId;
+    fetch(url, requestOptions)
+      .then(response => response.json())
+      // .then(data => this.setState({ postId: data.id }));
+  }
+
   render() {
     return (
       <div align='left'>
@@ -145,27 +120,27 @@ class Student extends React.Component {
           </div>
           <Col sm={5}>
             <FormGroup row>
-              <Label for="sname" sm={3}>Фамилия</Label>
+              <Label for="lastname" sm={3}>Фамилия</Label>
               <Col>
-                <Input type="text" name="sname" id="sname" value={this.state.student.sname} onChange={this.handleInputChange} />
+                <Input type="text" name="lastname" id="lastname" value={this.state.student.lastname} onChange={this.handleInputChange} />
               </Col>
             </FormGroup>
             <FormGroup row>
-              <Label for="fname" sm={3}>Имя</Label>
+              <Label for="firstname" sm={3}>Имя</Label>
               <Col>
-                <Input type="text" name="fname" id="fname" value={this.state.student.fname} onChange={this.handleInputChange} />
+                <Input type="text" name="firstname" id="firstname" value={this.state.student.firstname} onChange={this.handleInputChange} />
               </Col>
             </FormGroup>
             <FormGroup row>
-              <Label for="mname" sm={3}>Отчество</Label>
+              <Label for="middlename" sm={3}>Отчество</Label>
               <Col>
-                <Input type="text" name="mname" id="mname" value={this.state.student.mname} onChange={this.handleInputChange} />
+                <Input type="text" name="middlename" id="middlename" value={this.state.student.middlename} onChange={this.handleInputChange} />
               </Col>
             </FormGroup>
             <FormGroup row>
-              <Label for="birthday" sm={3}>Дата рождения</Label>
+              <Label for="birthdate" sm={3}>Дата рождения</Label>
               <Col>
-                <Input type="date" name="birthday" id="birthday" value={moment.unix(this.state.student.birthday).format('YYYY-MM-DD')} onChange={this.handleInputChange} />
+                <Input type="date" name="birthdate" id="birthdate" value={moment(this.state.student.birthdate).format('YYYY-MM-DD')} onChange={this.handleInputChange} />
               </Col>
             </FormGroup>
             <FormGroup row>
@@ -190,6 +165,17 @@ class Student extends React.Component {
             returnPath !== ''
               ? (
                 <div align="right">
+                  <Button color='primary' onClick={this.saveStudent}>Сохранить</Button>{' '}
+                  <Button
+                    color='danger'
+                    onClick={this.deleteStudent}
+                    tag={Link}
+                    to={{
+                      pathname: returnPath,
+                    }}
+                  >
+                    Удалить
+                  </Button>{' '}
                   <Button
                     color="secondary"
                     tag={Link}
