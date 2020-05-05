@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Label, FormGroup, Col, Container, Button } from 'reactstrap';
+import { Input, Label, FormGroup, Col, Container, Button, Modal, ModalHeader, ModalBody, Row } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import 'moment/locale/ru';
@@ -23,6 +23,7 @@ class Student extends React.Component {
         email: '',
         address: '',
       },
+      isConfirmModalOpen: false,
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -100,15 +101,39 @@ class Student extends React.Component {
       // .then(data => this.setState({ postId: data.id }));
   }
 
-  deleteStudent() {
-    const requestOptions = {
-      method: 'DELETE',
-    };
-    const url = 'http://localhost:5000/api/v1/students/' + studentId;
-    fetch(url, requestOptions)
-      .then(response => response.json())
-      // .then(data => this.setState({ postId: data.id }));
+  deleteStudent(action) {
+    switch (action) {
+      case 'confirm': {
+        const requestOptions = {
+          method: 'DELETE',
+        };
+        const url = 'http://localhost:5000/api/v1/students/' + studentId;
+        fetch(url, requestOptions)
+          .then(response => response.json())
+          // .then(data => this.setState({ postId: data.id }));
+        this.setState({ isConfirmModalOpen: false });
+        break;
+      }
+
+      case '': {
+        this.setState({
+          isConfirmModalOpen: true,
+        });
+        break;
+      }
+
+      default:
+        this.setState({
+          isConfirmModalOpen: false,
+        });
+    }
   }
+
+  handleDeleteStudent() {
+    this.setState({
+      isConfirmModalOpen: true,
+    });
+  };
 
   render() {
     return (
@@ -140,7 +165,7 @@ class Student extends React.Component {
             <FormGroup row>
               <Label for="birthdate" sm={3}>Дата рождения</Label>
               <Col>
-                <Input type="date" name="birthdate" id="birthdate" value={moment(this.state.student.birthdate).format('YYYY-MM-DD')} onChange={this.handleInputChange} />
+                <Input type="date" name="birthdate" id="birthdate" value={this.state.student.birthdate} onChange={this.handleInputChange} />
               </Col>
             </FormGroup>
             <FormGroup row>
@@ -167,12 +192,8 @@ class Student extends React.Component {
                 <div align="right">
                   <Button color='primary' onClick={this.saveStudent}>Сохранить</Button>{' '}
                   <Button
-                    color='danger'
-                    onClick={this.deleteStudent}
-                    tag={Link}
-                    to={{
-                      pathname: returnPath,
-                    }}
+                    color="danger"
+                    onClick={() => this.deleteStudent('')}
                   >
                     Удалить
                   </Button>{' '}
@@ -191,6 +212,39 @@ class Student extends React.Component {
             }
           </Col>
         </Container>
+        <Modal isOpen={this.state.isConfirmModalOpen} size='lg'>
+          <ModalHeader>Уверены, что хотите удалить студента?</ModalHeader>
+          <ModalBody>
+            <div align="center">
+              <Container>
+                <Row>
+                <Col sm={4}>
+                  <Button
+                    color="danger"
+                    onClick={() => this.deleteStudent('confirm')}
+                    tag={Link}
+                    to={{
+                      pathname: returnPath,
+                    }}
+                  >
+                    Удалить
+                  </Button>
+                </Col>
+                <Col sm={8}>
+                  <Button
+                    color="secondary"
+                    onClick={() => this.deleteStudent('cancel')}
+                  >
+                    Отмена
+                  </Button>
+                </Col>
+                </Row>
+              </Container>
+            {/* </div>
+            <div align="right"> */}
+            </div>
+          </ModalBody>
+        </Modal>
       </div>
     );
   }
