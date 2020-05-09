@@ -14,17 +14,15 @@ class Student extends React.Component {
     this.state = {
       student: {
         uuid: '',
-        groups: [],
         lastname: '',
         firstname: '',
-        sname: '',
         middlename: '',
         birthdate: '',
         phone: '',
         email: '',
         address: '',
       },
-      isConfirmModalOpen: false,
+      isDelConfirmModalOpen: false,
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -129,27 +127,27 @@ class Student extends React.Component {
         fetch(url, requestOptions)
           .then(response => response.json())
           // .then(data => this.setState({ postId: data.id }));
-        this.setState({ isConfirmModalOpen: false });
+        this.setState({ isDelConfirmModalOpen: false });
         break;
       }
 
       case '': {
         this.setState({
-          isConfirmModalOpen: true,
+          isDelConfirmModalOpen: true,
         });
         break;
       }
 
       default:
         this.setState({
-          isConfirmModalOpen: false,
+          isDelConfirmModalOpen: false,
         });
     }
   }
 
   handleDeleteStudent() {
     this.setState({
-      isConfirmModalOpen: true,
+      isDelConfirmModalOpen: true,
     });
   };
 
@@ -230,7 +228,7 @@ class Student extends React.Component {
             }
           </Col>
         </Container>
-        <Modal isOpen={this.state.isConfirmModalOpen} size='lg'>
+        <Modal isOpen={this.state.isDelConfirmModalOpen} size='lg'>
           <ModalHeader>Уверены, что хотите удалить студента?</ModalHeader>
           <ModalBody>
             <div align="center">
