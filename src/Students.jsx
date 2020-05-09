@@ -52,6 +52,7 @@ class Students extends React.Component {
                 state: {
                   studentId: st.uuid,
                   returnPath: '/students/',
+                  createStudent: false,
                 },
               }}
             >
@@ -78,6 +79,7 @@ class Students extends React.Component {
                   state: {
                     studentId: `${uuidv4()}`,
                     returnPath: '/students/',
+                    createStudent: true,
                   },
                 }}>
               Добавить студента

@@ -6,6 +6,7 @@ import 'moment/locale/ru';
 
 let returnPath = '';
 let studentId = '';
+let createStudent = false;
 
 class Student extends React.Component {
   constructor(...props) {
@@ -32,10 +33,16 @@ class Student extends React.Component {
   }
 
   componentDidMount() {
-    returnPath = this.props.location.state ? this.props.location.state.returnPath : '';
     if (this.props.location.state) {
+      returnPath = this.props.location.state.returnPath;
+      createStudent = this.props.location.state.createStudent;
       studentId = this.props.location.state.studentId;
-      this.getStudent(studentId);
+      this.setState({
+        student: {
+          uuid: studentId,
+        },
+      });
+      if (createStudent === false) this.getStudent(studentId);
     }
   }
 
@@ -43,9 +50,20 @@ class Student extends React.Component {
     const url = 'http://localhost:5000/api/v1/students/' + studentId;
     fetch(url)
       .then((res) => res.json())
-      .then((data) => {
-        if (data.data) {
-          this.setState({ student: data.data });
+      .then((res) => {
+        if (res.data) {
+          this.setState({
+            student: {
+              uuid: res.data.uuid,
+              lastname: res.data.lastname,
+              firstname: res.data.firstname,
+              middlename: res.data.middlename,
+              birthdate: moment(res.data.birthdate).format('YYYY-MM-DD'),
+              phone: res.data.phone,
+              email: res.data.email,
+              address: res.data.address,
+            },
+          });
         } else {
           this.setState({
             student: {
@@ -93,7 +111,7 @@ class Student extends React.Component {
         lastname: this.state.student.lastname,
         firstname: this.state.student.firstname,
         middlename: this.state.student.middlename,
-        birthdate: this.state.student.birthdate ? moment(this.state.student.birthdate).format('YYYY-MM-DD') : null,
+        birthdate: this.state.student.birthdate,
       }),
     };
     fetch('http://localhost:5000/api/v1/students', requestOptions)
